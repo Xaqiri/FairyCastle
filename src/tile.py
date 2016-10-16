@@ -9,18 +9,26 @@ p.init()
 
 class Tile(): 
     """ Every object in the game, from the floor to the walls to the player to the player's equipment is a Tile object """
-    def __init__(self, sprite, pos, tile_size, name='A tile', walkable=True): 
+    def __init__(self, sprite, pos, tile_size, name='A tile', id='tile', walkable=True): 
         self.tile_size = tile_size
         self.pos_index = [pos[0], pos[1]] 
         self.pos_coordinates = 0 
         self.sprite = sprite 
         self.is_walkable = walkable 
         self.name = name 
-        self.id = 'tile' 
+        self.id = id 
         self.hp = 0 
+        self.revealed = False 
+        if self.id == 'wall' or self.id == 'door' or self.id == 'enemy': 
+            self.blocks_sight = True 
+        else: 
+            self.blocks_sight = False 
         
     def __str__(self): 
         return self.name 
+
+    def __repr__(self): 
+        return self.id 
 
     def update(self, SCREEN_OFFSET): 
         self.pos_coordinates = self.pos_index[0]*self.tile_size+SCREEN_OFFSET[0], self.pos_index[1]*self.tile_size+SCREEN_OFFSET[1] 

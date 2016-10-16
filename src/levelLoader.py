@@ -34,29 +34,41 @@ class LevelLoader(object):
         for y in range(self.board_height): 
             for x in range(self.board_width): 
                 if lines[y][x] == '#': 
-                    self.game_board[x][y] = Tile([self.environmentSprites[1][4]], (x, y), TILE_DIMENSION, 'A wall', False) 
+                    self.game_board[x][y] = Tile([self.environmentSprites[1][4]], (x, y), TILE_DIMENSION, 'A wall', 'wall', False) 
                 elif lines[y][x] == '.': 
-                    self.game_board[x][y] = Tile([self.environmentSprites[3][6]], (x, y), TILE_DIMENSION, 'The floor') 
+                    self.game_board[x][y] = Tile([self.environmentSprites[3][6]], (x, y), TILE_DIMENSION, 'The floor', 'floor') 
                 elif lines[y][x] == '@': 
-                    self.game_board[x][y] = Tile([self.environmentSprites[3][6]], (x, y), TILE_DIMENSION, 'The floor') 
-                    self.player = Player([self.actorSprites[0][0], self.itemSprites[4][1], self.itemSprites[4][2], self.itemSprites[4][3]], (x, y), TILE_DIMENSION) 
-                    self.actor_board[x][y] =  self.player 
+                    self.game_board[x][y] = Tile([self.environmentSprites[3][6]], (x, y), TILE_DIMENSION, 'The floor', 'floor') 
+                    player_pos = (x, y) 
                 elif lines[y][x] == 'g': 
-                    self.game_board[x][y] = Tile([self.environmentSprites[3][6]], (x, y), TILE_DIMENSION, 'The floor') 
+                    self.game_board[x][y] = Tile([self.environmentSprites[3][6]], (x, y), TILE_DIMENSION, 'The floor', 'floor') 
                     self.actor_board[x][y] = Goblin([self.actorSprites[1][0]], (x, y), TILE_DIMENSION) 
+                    self.enemies.append(self.actor_board[x][y]) 
                 elif lines[y][x] == '~': 
-                    self.game_board[x][y] = Tile([self.environmentSprites[1][1]], (x, y), TILE_DIMENSION, 'Some water', False) 
+                    self.game_board[x][y] = Tile([self.environmentSprites[1][1]], (x, y), TILE_DIMENSION, 'Some water', 'tile', False) 
                 elif lines[y][x] == '|': 
-                    self.game_board[x][y] = Tile([self.environmentSprites[2][7]], (x, y), TILE_DIMENSION, 'A door', True) 
+                    self.game_board[x][y] = Tile([self.environmentSprites[2][7]], (x, y), TILE_DIMENSION, 'A door', 'door') 
                 elif lines[y][x] == '!': 
-                    self.game_board[x][y] = Tile([self.environmentSprites[3][6], self.itemSprites[0][6]], (x, y), TILE_DIMENSION, 'A potion', True) 
+                    self.game_board[x][y] = Tile([self.environmentSprites[3][6], self.itemSprites[0][6]], (x, y), TILE_DIMENSION, 'A potion') 
                 elif lines[y][x] == '>': 
-                    self.game_board[x][y] = Tile([self.environmentSprites[3][6], self.environmentSprites[0][7]], (x, y), TILE_DIMENSION, 'A way down', True) 
+                    self.game_board[x][y] = Tile([self.environmentSprites[3][6], self.environmentSprites[0][7]], (x, y), TILE_DIMENSION, 'A way down') 
                 elif lines[y][x] == '0': 
-                    self.game_board[x][y] = Tile([self.environmentSprites[3][6], self.itemSprites[1][7]], (x, y), TILE_DIMENSION, 'A closed barrel', True) 
+                    self.game_board[x][y] = Tile([self.environmentSprites[3][6], self.itemSprites[1][7]], (x, y), TILE_DIMENSION, 'A closed barrel') 
                 elif lines[y][x] == '1': 
-                    self.game_board[x][y] = Tile([self.itemSprites[3][7]], (x, y), TILE_DIMENSION, 'An unopened crate', True) 
+                    self.game_board[x][y] = Tile([self.itemSprites[3][7]], (x, y), TILE_DIMENSION, 'An unopened crate') 
                 else: 
-                    self.game_board[x][y] = Tile([self.environmentSprites[1][6]], (x, y), TILE_DIMENSION, 'Temp Empty') 
-        
+                    self.game_board[x][y] = Tile([self.environmentSprites[1][6]], (x, y), TILE_DIMENSION, 'Temp Empty', 'abyss', False) 
+        self.player = Player([self.actorSprites[0][0], self.itemSprites[4][1], self.itemSprites[4][2], self.itemSprites[4][3]], player_pos, TILE_DIMENSION, self.game_board, self.actor_board) 
+        self.actor_board[player_pos[0]][player_pos[1]] = self.player 
         f.close() 
+
+    def render(self, screen, player, TILE_DIMENSION, SCREEN_OFFSET, ui): 
+        self.player.update(SCREEN_OFFSET) 
+        self.game_board[self.player.pos_index[0]][self.player.pos_index[1]].revealed = True 
+        for i in self.player.fov.visible_tiles: 
+            try: 
+                i.update(SCREEN_OFFSET) 
+                i.render(screen) 
+            except: 
+                pass 
+        self.player.render(screen) 

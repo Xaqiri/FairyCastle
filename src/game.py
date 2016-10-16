@@ -11,7 +11,7 @@ from levelLoader import *
 
 p.init() 
 # Version #.  Release.mainBranch.testBranch 
-VER =           '0.10.12' 
+VER =           '0.10.13' 
 p.display.set_caption('Fairy Castle' + ',    version:  ' + VER) 
 
 ''' TODO ''' 
@@ -33,18 +33,15 @@ TILE_DIMENSION = int(16*SCALE)
 window_size = window_width, window_height = 1280, 960 
 SCREEN_CENTER = (window_width//2, window_height//2) 
 screen = p.display.set_mode(window_size) 
-# Number of tiles in the game board 
-#board_size = board_width, board_height = 20, 20 
-# The game board holds all non-actor tiles, such as the floor and walls 
-#game_board = [[0] * board_height for i in range(board_width)] 
-# The actor board holds all player characters and enemies 
-#actor_board = [[0] * board_height for i in range(board_width)] 
+
 sprites = dict(actorSheet=p.image.load(os.path.join('..', 'assets', 'spriteSheets', 
                                                     'actorSpriteSheet8x6.png')).convert(), 
                 environmentSheet=p.image.load(os.path.join('..', 'assets', 'spriteSheets', 
                                                     'environmentSpriteSheet15x8.png')).convert(), 
                 itemSheet=p.image.load(os.path.join('..', 'assets', 'spriteSheets', 
-                                                    'itemSpriteSheet12x8.png')).convert()) 
+                                                    'itemSpriteSheet12x8.png')).convert(), 
+                cursor=p.image.load(os.path.join('..', 'assets', '1', 
+                                                    'cursor.png')).convert()) 
 levels = dict(level_t=os.path.join('..', 'levels', 'level_1.txt')) 
 # Goes through each sprite and sets a certain color to be transparent and scales it to the appropriate dimensions 
 for i in sprites: 
@@ -62,153 +59,51 @@ level = LevelLoader(levels['level_t'], window_size, actor_sprite_sheet, environm
                     item_sprite_sheet) 
 level.load(TILE_DIMENSION) 
 
-player = level.player 
-game_board = level.game_board 
-actor_board = level.actor_board 
-board_width = level.board_width 
-board_height = level.board_height 
-enemies = level.enemies 
 # Subtracting 4*TILE_DIMENSION to move the player to the center of the playable window rather than the entire window.  Don't know where the 32 comes from 
 # Offsets the game board by a certain amount 
-SCREEN_OFFSET = [SCREEN_CENTER[0]-player.pos_index[0]*TILE_DIMENSION-4*TILE_DIMENSION+32, SCREEN_CENTER[1]-player.pos_index[1]*TILE_DIMENSION] 
-player.pos_coordinates = SCREEN_OFFSET 
-ui = UI(window_size, (board_width, board_height), 32, TILE_DIMENSION, SCREEN_OFFSET, actor_sprite_sheet[0][1]) 
+SCREEN_OFFSET = [SCREEN_CENTER[0]-level.player.pos_index[0]*TILE_DIMENSION-4*TILE_DIMENSION+32, SCREEN_CENTER[1]-level.player.pos_index[1]*TILE_DIMENSION] 
+level.player.pos_coordinates = SCREEN_OFFSET 
+ui = UI(window_size, (level.board_width, level.board_height), 32, TILE_DIMENSION, SCREEN_OFFSET, sprites['cursor']) 
 
-def reload_level(): 
-    """ 
-    Temp function for debugging 
-    Reloads and redraws everything without needing to restart the program 
-    """ 
-
-    global sprites, levels, actor_sprite_sheet, environment_sprite_sheet, item_sprite_sheet, level, player, game_board, actor_board, board_width, board_height, enemies, SCREEN_OFFSET, SCREEN_CENTER, player 
-    sprites = dict(actorSheet=p.image.load(os.path.join('..', 'assets', 'spriteSheets', 
-                                                    'actorSpriteSheet6x6.png')).convert(), 
-                environmentSheet=p.image.load(os.path.join('..', 'assets', 'spriteSheets', 
-                                                    'environmentSpriteSheet15x8.png')).convert(), 
-                itemSheet=p.image.load(os.path.join('..', 'assets', 'spriteSheets', 
-                                                    'itemSpriteSheet6x6.png')).convert()) 
-    levels = dict(level_t=os.path.join('..', 'levels', 'level_2.txt')) 
-    for i in sprites: 
-        sprites[i].set_colorkey(TRANS) 
-
-    actor_sprite_sheet = SpriteLoader(sprites['actorSheet'], TILE_DIMENSION, (0, 0), 
-                                    16, 1, 6, 6).sprites 
-    environment_sprite_sheet = SpriteLoader(sprites['environmentSheet'], TILE_DIMENSION, (0, 0), 
-                                        16, 1, 15, 8).sprites 
-    item_sprite_sheet = SpriteLoader(sprites['itemSheet'], TILE_DIMENSION, (0, 0), 
-                                        16, 1, 6, 6).sprites 
-
-    level = LevelLoader(levels['level_t'], window_size, actor_sprite_sheet, environment_sprite_sheet, 
-                        item_sprite_sheet) 
-    level.load(TILE_DIMENSION) 
-
-    player = level.player 
-    game_board = level.game_board 
-    actor_board = level.actor_board 
-    board_width = level.board_width 
-    board_height = level.board_height 
-    enemies = level.enemies 
-    SCREEN_OFFSET = [SCREEN_CENTER[0]-player.pos_index[0]*TILE_DIMENSION-4*TILE_DIMENSION+32, SCREEN_CENTER[1]-player.pos_index[1]*TILE_DIMENSION] 
-    player.pos_coordinates = SCREEN_OFFSET 
-    create_board(board_width, board_height) 
-
-# Lines 113 through 184 should probably be moved to the levelLoader class 
-def create_board1(board_size): 
-    ''' Creates the game board, initializing floor and wall tiles in game_board and players and enemies in actor_board '''
-    for y in range(board_height): 
-        for x in range(board_width): 
-            if x == 0 and y == 0: # top left 
-                game_board[x][y] = Tile([t[2][7]], (x, 
-                y), TILE_DIMENSION, SCREEN_OFFSET, 'A wall', False) 
-            elif x == board_width-1 and y == 0: # top right 
-                game_board[x][y] = Tile([t[3][7]], (x, 
-                y), TILE_DIMENSION, SCREEN_OFFSET, 'A wall', False) 
-            elif x == 0 and y == board_height-1: # bottom left 
-                game_board[x][y] = Tile([t[5][7]], (x, 
-                y), TILE_DIMENSION, SCREEN_OFFSET, 'A wall', False) 
-            elif x == board_width-1 and y == board_height-1: # bottom right 
-                game_board[x][y] = Tile([t[4][7]], (x, 
-                y), TILE_DIMENSION, SCREEN_OFFSET, 'A wall', False) 
-            elif y == 0 or y == board_height-1: # horizontal wall 
-                game_board[x][y] = Tile([t[1][7]], (x, 
-                y), TILE_DIMENSION, SCREEN_OFFSET, 'A wall', False) 
-            elif x == 0 or x == board_width-1: # vertical wall 
-                game_board[x][y] = Tile([t[0][7]], (x, 
-                y), TILE_DIMENSION, SCREEN_OFFSET, 'A wall', False)
-            else: # floor 
-                game_board[x][y] = Tile([t[8][8]], (x, y), TILE_DIMENSION, SCREEN_OFFSET, 'The floor') 
-    actor_board[player.pos_index[0]][player.pos_index[1]] = player 
-    
-def create_board(board_width, board_height): 
-    for y in range(board_height): 
-        for x in range(board_width): 
-            if type(game_board[x][y]) != int: 
-                game_board[x][y].update(SCREEN_OFFSET) 
-            if type(actor_board[x][y]) != int: 
-                actor_board[x][y].update(SCREEN_OFFSET) 
-
-def draw_board(player): 
-    if (player.pos_index[0]+player.vision//2+1<=board_width 
-            and player.pos_index[1]+player.vision//2+1<=board_height): 
-        for y in range(player.pos_index[1]-player.vision//2, 
-                        player.pos_index[1]+player.vision//2+1): 
-            for x in range(player.pos_index[0]-player.vision//2, 
-                        player.pos_index[0]+player.vision//2+1): 
-                can_draw(game_board[x][y]) 
-                can_draw(actor_board[x][y]) 
-    elif (player.pos_index[0]+player.vision//2+1>board_width 
-            and player.pos_index[1]+player.vision//2+1<=board_height): 
-        for y in range(player.pos_index[1]-player.vision//2, 
-                        player.pos_index[1]+player.vision//2+1): 
-            for x in range(player.pos_index[0]-player.vision//2, board_width): 
-                can_draw(game_board[x][y]) 
-                can_draw(actor_board[x][y]) 
-    elif (player.pos_index[1]+player.vision//2+1>board_height 
-            and player.pos_index[0]+player.vision//2+1<=board_width): 
-        for y in range(player.pos_index[1]-player.vision//2, board_height): 
-            for x in range(player.pos_index[0]-player.vision//2, 
-                            player.pos_index[0]+player.vision//2+1): 
-                can_draw(game_board[x][y]) 
-                can_draw(actor_board[x][y]) 
-    else: 
-        for y in range(player.pos_index[1]-player.vision//2, board_height): 
-            for x in range(player.pos_index[0]-player.vision//2, board_width): 
-                can_draw(game_board[x][y]) 
-                can_draw(actor_board[x][y]) 
-
-def can_draw(tile): 
-    ''' Checks to see if an index in either game_board or actor_board is an actual tile, then displays it if it's within screen bounds '''
-    if type(tile) != int: 
-        tile.update(SCREEN_OFFSET) 
-        if (tile.pos_coordinates[0] < ui.edge[0][0] 
-                and tile.pos_coordinates[0] >= -TILE_DIMENSION 
-                and tile.pos_coordinates[1] >= 0 
-                and tile.pos_coordinates[1] < window_height): 
-            tile.render(screen) 
-        
 # Should be moved to player class 
 def can_move(tile, direction): 
     # Need to rework this function to handle movement checking more elegantly 
+    up = level.actor_board[tile.pos_index[0]][tile.pos_index[1] - 1] 
+    down = level.actor_board[tile.pos_index[0]][tile.pos_index[1] + 1] 
+    left = level.actor_board[tile.pos_index[0] - 1][tile.pos_index[1]] 
+    right = level.actor_board[tile.pos_index[0] + 1][tile.pos_index[1]] 
     if direction == 'up': 
-        if type(actor_board[tile.pos_index[0]][tile.pos_index[1] - 1]) != int: 
-            return game_board[tile.pos_index[0]][tile.pos_index[1] - 1].is_walkable and actor_board[tile.pos_index[0]][tile.pos_index[1] - 1].is_walkable 
+        if type(up) != int: 
+            if up.id == 'enemy': 
+                level.player.attack(up) 
+            else: 
+                return level.game_board[tile.pos_index[0]][tile.pos_index[1] - 1].is_walkable and up.is_walkable 
         else: 
-            return game_board[tile.pos_index[0]][tile.pos_index[1] - 1].is_walkable 
+            return level.game_board[tile.pos_index[0]][tile.pos_index[1] - 1].is_walkable 
     if direction == 'down': 
-        if type(actor_board[tile.pos_index[0]][tile.pos_index[1] + 1]) != int: 
-            return game_board[tile.pos_index[0]][tile.pos_index[1] + 1].is_walkable and actor_board[tile.pos_index[0]][tile.pos_index[1] + 1].is_walkable 
+        if type(down) != int: 
+            if down.id == 'enemy': 
+                level.player.attack(down)
+            else: 
+                return level.game_board[tile.pos_index[0]][tile.pos_index[1] + 1].is_walkable and down.is_walkable 
         else: 
-            return game_board[tile.pos_index[0]][tile.pos_index[1] + 1].is_walkable 
+            return level.game_board[tile.pos_index[0]][tile.pos_index[1] + 1].is_walkable 
     if direction == 'left': 
-        if type(actor_board[tile.pos_index[0] - 1][tile.pos_index[1]]) != int: 
-            return game_board[tile.pos_index[0] - 1][tile.pos_index[1]].is_walkable and actor_board[tile.pos_index[0] - 1][tile.pos_index[1]].is_walkable 
+        if type(left) != int: 
+            if left.id == 'enemy': 
+                level.player.attack(left) 
+            else: 
+                return level.game_board[tile.pos_index[0] - 1][tile.pos_index[1]].is_walkable and left.is_walkable 
         else: 
-            return game_board[tile.pos_index[0] - 1][tile.pos_index[1]].is_walkable 
+            return level.game_board[tile.pos_index[0] - 1][tile.pos_index[1]].is_walkable 
     if direction == 'right': 
-        if type(actor_board[tile.pos_index[0] + 1][tile.pos_index[1]]) != int: 
-            return game_board[tile.pos_index[0] + 1][tile.pos_index[1]].is_walkable and actor_board[tile.pos_index[0] + 1][tile.pos_index[1]].is_walkable 
+        if type(right) != int: 
+            if right.id == 'enemy': 
+                level.player.attack(right) 
+            else: 
+                return level.game_board[tile.pos_index[0] + 1][tile.pos_index[1]].is_walkable and right.is_walkable 
         else: 
-            return game_board[tile.pos_index[0] + 1][tile.pos_index[1]].is_walkable 
+            return level.game_board[tile.pos_index[0] + 1][tile.pos_index[1]].is_walkable 
     
 def move_board(direction): 
     global SCREEN_OFFSET 
@@ -238,27 +133,27 @@ def input():
                 direction = 'left' 
             if e.key == p.K_RIGHT: 
                 direction = 'right' 
-            if e.key == p.K_SPACE: 
-                direction = 'reload' 
+            #if e.key == p.K_SPACE: 
+            #    direction = 'reload' 
     return direction 
 
 def update(direction, clock): 
-    ui.update(clock, SCREEN_OFFSET) 
-    actor_board[player.pos_index[0]][player.pos_index[1]] = 0 
-    if can_move(player, direction): 
-        player.move(direction) 
+    ui.update(clock, SCREEN_OFFSET, level.game_board) 
+    if direction in ['up', 'down', 'left', 'right'] and can_move(level.player, direction): 
+        level.actor_board[level.player.pos_index[0]][level.player.pos_index[1]] = 0 
+        level.player.move(direction) 
         move_board(direction) 
-    actor_board[player.pos_index[0]][player.pos_index[1]] = player 
+        level.actor_board[level.player.pos_index[0]][level.player.pos_index[1]] = level.player 
+    for e in level.enemies: 
+        if not e.alive: 
+            level.actor_board[e.pos_index[0]][e.pos_index[1]] = 0 
     
 def render(): 
     screen.fill(GRAY) 
-    draw_board(player) 
-    for i in range(4): 
-        p.draw.line(screen, GREEN, (player.pos_coordinates[0]+TILE_DIMENSION/2, player.pos_coordinates[1]+TILE_DIMENSION/2), (player.pos_coordinates[0]+player.vision*TILE_DIMENSION, player.pos_coordinates[1]+TILE_DIMENSION/2), 2) 
-    ui.render(screen, GREEN, game_board, actor_board) 
+    level.render(screen, level.player, TILE_DIMENSION, SCREEN_OFFSET, ui) 
+    ui.render(screen, GREEN, level.game_board, level.actor_board) 
     p.display.flip() 
     
-#create_board(board_width, board_height) 
 clock = p.time.Clock() 
 done = False 
 while not done: 
@@ -270,4 +165,4 @@ while not done:
     render() 
     clock.tick(60) 
 
-p.quit() 
+p.quit()    

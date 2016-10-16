@@ -1,0 +1,45 @@
+Fire 
+Ice 
+Lightning 
+Earth 
+Poison 
+Holy 
+Dark 
+
+Individual Items 
+    Helm - Vision 
+        Fire 
+            Give vision range inside fire effects 
+                e.g. If there are a dozen torches in a level, you can see everything in those twelve torches' vision ranges 
+    Body - Stacks 
+        Fire 
+            Builds stacks of heat with each attack 
+        Lightning 
+            Builds stacks of charge 
+    Gloves - Magic 
+        Can be used to cast spells 
+    Legs - Mobility 
+        Fire 
+            Can teleport to fire 
+                i.e. torches or burning ground 
+    Weapon 
+        Sword 
+        Dagger 
+        Axe 
+            Has a chance to disable and enemy's shield for a few 
+        Hammer 
+        Spear 
+        Wand 
+        Grenade 
+        Bow 
+    Shield - Defence 
+
+Set Bonuses 
+    Equipping multiple items of the same element gives set bonuses 
+    2pc 
+    3pc 
+    4pc 
+        Fire 
+            Teleporting to a torch causes it to explode 
+    5pc 
+    6pc 

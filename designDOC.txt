@@ -93,7 +93,7 @@ Inspirations:
                         enemies in range to move slower 
                         At max stacks, the player is frozen, completely immobilized and resistant 
                         to some types of damage 
-                    Lightning 
+                    Storm   
                         Enchanting a shield with lightning emanates a bubble shield in a small aoe 
                         around the player.  
                             Allies near the player become shielded, but they lose the shield if 
