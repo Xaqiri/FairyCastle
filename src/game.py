@@ -11,7 +11,7 @@ from levelLoader import *
 
 p.init() 
 # Version #.  Release.mainBranch.testBranch 
-VER =           '0.10.15' 
+VER =           '0.10.16' 
 p.display.set_caption('Fairy Castle' + ',    version:  ' + VER) 
 
 ''' TODO ''' 
@@ -141,7 +141,7 @@ def input():
                 level.player.heal() 
         if e.type == p.MOUSEBUTTONDOWN: 
             try: 
-                if level.actor_board[ui.mouse_index[0]][ui.mouse_index[1]].id == 'enemy': 
+                if level.actor_board[ui.mouse_index[0]][ui.mouse_index[1]].id == 'enemy' and level.actor_board[ui.mouse_index[0]][ui.mouse_index[1]].revealed: 
                     level.player.ranged_attack(level.actor_board[ui.mouse_index[0]][ui.mouse_index[1]], level) 
             except: 
                 pass 
