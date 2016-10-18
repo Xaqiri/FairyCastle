@@ -10,7 +10,7 @@ class Goblin(Tile):
         super().__init__(sprite, pos, tile_size, name, walkable) 
         self.hp = 8 
         self.mp = 0 
-        self.str = 1 
+        self.melee = 1 
         self.name = 'A goblin' 
         self.id = 'enemy' 
         self.is_walkable = walkable 

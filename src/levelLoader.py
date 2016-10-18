@@ -27,12 +27,12 @@ class LevelLoader(object):
     def load(self, TILE_DIMENSION): 
         f = open(self.file) 
         lines = [line.rstrip('\n') for line in f] 
-        self.board_height = len(lines) 
-        self.board_width = len(lines[0]) 
-        self.game_board = [[0]*self.board_height for x in range(self.board_width)]
-        self.actor_board = [[0]*self.board_height for x in range(self.board_width)]
-        for y in range(self.board_height): 
-            for x in range(self.board_width): 
+        self.board_height = len(lines[0]) 
+        self.board_width = len(lines) 
+        self.game_board = [[0]*self.board_width for y in range(self.board_height)]
+        self.actor_board = [[0]*self.board_width for y in range(self.board_height)] 
+        for y in range(len(lines)): 
+            for x in range(len(lines[0])): 
                 if lines[y][x] == '#': 
                     self.game_board[x][y] = Tile([self.environmentSprites[1][4]], (x, y), TILE_DIMENSION, 'A wall', 'wall', False) 
                 elif lines[y][x] == '.': 
@@ -49,9 +49,11 @@ class LevelLoader(object):
                 elif lines[y][x] == '|': 
                     self.game_board[x][y] = Tile([self.environmentSprites[2][7]], (x, y), TILE_DIMENSION, 'A door', 'door') 
                 elif lines[y][x] == '!': 
-                    self.game_board[x][y] = Tile([self.environmentSprites[3][6], self.itemSprites[0][6]], (x, y), TILE_DIMENSION, 'A potion') 
+                    self.game_board[x][y] = Tile([self.environmentSprites[3][6], self.itemSprites[0][6]], (x, y), TILE_DIMENSION, 'A potion', 'hp_potion') 
                 elif lines[y][x] == '>': 
                     self.game_board[x][y] = Tile([self.environmentSprites[3][6], self.environmentSprites[0][7]], (x, y), TILE_DIMENSION, 'A way down') 
+                elif lines[y][x] == 'w': 
+                    self.game_board[x][y] = Tile([self.environmentSprites[3][6], self.itemSprites[1][3]], (x, y), TILE_DIMENSION, 'A sword', 'weapon')
                 elif lines[y][x] == '0': 
                     self.game_board[x][y] = Tile([self.environmentSprites[3][6], self.itemSprites[1][7]], (x, y), TILE_DIMENSION, 'A closed barrel') 
                 elif lines[y][x] == '1': 
@@ -63,7 +65,7 @@ class LevelLoader(object):
         f.close() 
 
     def render(self, screen, player, TILE_DIMENSION, SCREEN_OFFSET, ui): 
-        self.player.update(SCREEN_OFFSET) 
+        self.player.update(SCREEN_OFFSET, self.game_board) 
         self.game_board[self.player.pos_index[0]][self.player.pos_index[1]].revealed = True 
         for i in self.player.fov.visible_tiles: 
             try: 

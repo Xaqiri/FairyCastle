@@ -11,7 +11,7 @@ from levelLoader import *
 
 p.init() 
 # Version #.  Release.mainBranch.testBranch 
-VER =           '0.10.13' 
+VER =           '0.10.14' 
 p.display.set_caption('Fairy Castle' + ',    version:  ' + VER) 
 
 ''' TODO ''' 
@@ -68,42 +68,46 @@ ui = UI(window_size, (level.board_width, level.board_height), 32, TILE_DIMENSION
 # Should be moved to player class 
 def can_move(tile, direction): 
     # Need to rework this function to handle movement checking more elegantly 
-    up = level.actor_board[tile.pos_index[0]][tile.pos_index[1] - 1] 
-    down = level.actor_board[tile.pos_index[0]][tile.pos_index[1] + 1] 
-    left = level.actor_board[tile.pos_index[0] - 1][tile.pos_index[1]] 
-    right = level.actor_board[tile.pos_index[0] + 1][tile.pos_index[1]] 
+    game_up = level.game_board[tile.pos_index[0]][tile.pos_index[1] - 1] 
+    game_down = level.game_board[tile.pos_index[0]][tile.pos_index[1] + 1] 
+    game_left = level.game_board[tile.pos_index[0] - 1][tile.pos_index[1]] 
+    game_right = level.game_board[tile.pos_index[0] + 1][tile.pos_index[1]] 
+    act_up = level.actor_board[tile.pos_index[0]][tile.pos_index[1] - 1] 
+    act_down = level.actor_board[tile.pos_index[0]][tile.pos_index[1] + 1] 
+    act_left = level.actor_board[tile.pos_index[0] - 1][tile.pos_index[1]] 
+    act_right = level.actor_board[tile.pos_index[0] + 1][tile.pos_index[1]] 
     if direction == 'up': 
-        if type(up) != int: 
-            if up.id == 'enemy': 
-                level.player.attack(up) 
+        if type(act_up) != int: 
+            if act_up.id == 'enemy': 
+                level.player.attack(act_up) 
             else: 
-                return level.game_board[tile.pos_index[0]][tile.pos_index[1] - 1].is_walkable and up.is_walkable 
+                return game_up.is_walkable and act_up.is_walkable 
         else: 
-            return level.game_board[tile.pos_index[0]][tile.pos_index[1] - 1].is_walkable 
+            return game_up.is_walkable 
     if direction == 'down': 
-        if type(down) != int: 
-            if down.id == 'enemy': 
-                level.player.attack(down)
+        if type(act_down) != int: 
+            if act_down.id == 'enemy': 
+                level.player.attack(act_down)
             else: 
-                return level.game_board[tile.pos_index[0]][tile.pos_index[1] + 1].is_walkable and down.is_walkable 
+                return game_down.is_walkable and act_down.is_walkable 
         else: 
-            return level.game_board[tile.pos_index[0]][tile.pos_index[1] + 1].is_walkable 
+            return game_down.is_walkable 
     if direction == 'left': 
-        if type(left) != int: 
-            if left.id == 'enemy': 
-                level.player.attack(left) 
+        if type(act_left) != int: 
+            if act_left.id == 'enemy': 
+                level.player.attack(act_left) 
             else: 
-                return level.game_board[tile.pos_index[0] - 1][tile.pos_index[1]].is_walkable and left.is_walkable 
+                return game_left.is_walkable and act_left.is_walkable 
         else: 
-            return level.game_board[tile.pos_index[0] - 1][tile.pos_index[1]].is_walkable 
+            return game_left.is_walkable 
     if direction == 'right': 
-        if type(right) != int: 
-            if right.id == 'enemy': 
-                level.player.attack(right) 
+        if type(act_right) != int: 
+            if act_right.id == 'enemy': 
+                level.player.attack(act_right) 
             else: 
-                return level.game_board[tile.pos_index[0] + 1][tile.pos_index[1]].is_walkable and right.is_walkable 
+                return game_right.is_walkable and act_right.is_walkable 
         else: 
-            return level.game_board[tile.pos_index[0] + 1][tile.pos_index[1]].is_walkable 
+            return game_right.is_walkable 
     
 def move_board(direction): 
     global SCREEN_OFFSET 
@@ -133,6 +137,8 @@ def input():
                 direction = 'left' 
             if e.key == p.K_RIGHT: 
                 direction = 'right' 
+            if e.key == p.K_q: 
+                level.player.heal() 
             #if e.key == p.K_SPACE: 
             #    direction = 'reload' 
     return direction 
@@ -147,11 +153,18 @@ def update(direction, clock):
     for e in level.enemies: 
         if not e.alive: 
             level.actor_board[e.pos_index[0]][e.pos_index[1]] = 0 
-    
+            level.enemies.remove(e) 
+    if not level.player.alive: 
+        print("You lose") 
+        sys.exit() 
+    if len(level.enemies) <= 0: 
+        print("You win") 
+        sys.exit() 
+        
 def render(): 
     screen.fill(GRAY) 
+    ui.render(screen, GREEN, level) 
     level.render(screen, level.player, TILE_DIMENSION, SCREEN_OFFSET, ui) 
-    ui.render(screen, GREEN, level.game_board, level.actor_board) 
     p.display.flip() 
     
 clock = p.time.Clock() 

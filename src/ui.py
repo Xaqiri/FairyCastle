@@ -24,7 +24,6 @@ class UI():
     def update(self, clock, SCREEN_OFFSET, game_board): 
         self.SCREEN_OFFSET = SCREEN_OFFSET[0], SCREEN_OFFSET[1] 
         self.mouse_pos = (p.mouse.get_pos()[0], p.mouse.get_pos()[1]) 
-        #self.mouse_index = self.mouse_pos[0]//self.tile_size, self.mouse_pos[1]//self.tile_size 
         self.fps_counter = clock.get_fps() 
         self.mouse_index = [ 
             (self.mouse_pos[0]-self.SCREEN_OFFSET[0])//32, 
@@ -35,9 +34,10 @@ class UI():
         except: 
             pass 
         
-    def render(self, screen, color, game_board, actor_board): 
+    def render(self, screen, color, level): 
+        # Remove the cursor sprite from the game board 
         try: 
-            game_board[self.mouse_index[0]][self.mouse_index[1]].sprite.pop() 
+            level.game_board[self.mouse_index[0]][self.mouse_index[1]].sprite.pop() 
         except: 
             pass 
         # Draws the edge of the ui 
@@ -45,34 +45,48 @@ class UI():
         # Displays the mouse position in pixel coordinates 
         screen.blit(self.font.render(str((self.mouse_pos[0], self.mouse_pos[1])), 1, color), (self.ui_pos, 10)) 
         # Displays the fps counter 
-        screen.blit(self.font.render("fps: " + str('{:.2f}'.format(self.fps_counter)), 1, color), (self.ui_pos+60, 400)) 
+        screen.blit(self.font.render("fps: " + str('{:.2f}'.format(self.fps_counter)), 1, color), (self.ui_pos+200, 10)) 
+        # Displays the player's info 
+        try: 
+            screen.blit(self.font.render("HP:  {}".format(level.player.hp), 1, (255, 100, 100)), (self.ui_pos, 120)) 
+        except: 
+            pass 
+        try: 
+            screen.blit(self.font.render("MP:  {}".format(level.player.mp), 1, (100, 100, 255)), (self.ui_pos, 150)) 
+        except: 
+            pass 
         # Check to see if mouse is within bounds of the game board 
-        if (self.mouse_pos[0] < self.edge[0][0] and self.mouse_pos[0] > 0 and self.mouse_pos[0] < self.board_size[0] and self.mouse_pos[1] > 0 and self.mouse_pos[1] < self.board_size[1] and self.mouse_index[0] >= 0 and self.mouse_index[1] >= 0 and game_board[self.mouse_index[0]][self.mouse_index[1]].revealed): 
+        if self.in_bounds(self.mouse_pos, level): 
             # If it is, check to see what type of tile the mouse is over 
-            if type(actor_board[self.mouse_index[0]][self.mouse_index[1]]) != int: 
-                # If the tile is an actor, display the tile information in the ui 
-                screen.blit(self.font.render(str(game_board[self.mouse_index[0]][self.mouse_index[1]]), 1, color), (self.ui_pos, 40)) 
-                screen.blit(self.font.render(str(actor_board[self.mouse_index[0]][self.mouse_index[1]]), 1, color), (self.ui_pos, 80)) 
-                try: 
-                    screen.blit(self.font.render("HP:  {}".format(actor_board[self.mouse_index[0]][self.mouse_index[1]].hp), 1, (255, 100, 100)), (self.ui_pos, 120)) 
-                except: 
-                    pass 
-                try: 
-                    screen.blit(self.font.render("MP:  {}".format(actor_board[self.mouse_index[0]][self.mouse_index[1]].mp), 1, (100, 100, 255)), (self.ui_pos, 150)) 
-                except: 
-                    pass 
+            if type(level.actor_board[self.mouse_index[0]][self.mouse_index[1]]) != int: 
+                if level.actor_board[self.mouse_index[0]][self.mouse_index[1]].revealed: 
+                    # If the tile is an actor, display the tile information in the ui 
+                    screen.blit(self.font.render(str(level.game_board[self.mouse_index[0]]  [self.mouse_index[1]]), 1, color), (self.ui_pos, 40)) 
+                    if level.actor_board[self.mouse_index[0]][self.mouse_index[1]].id == 'player': 
+                        screen.blit(self.font.render(str(level.actor_board[self.mouse_index[0]]     [self.mouse_index  [1]]), 1, color), (self.ui_pos, 80)) 
+                    else: 
+                        screen.blit(self.font.render(str(level.actor_board[self.mouse_index[0]]     [self.mouse_index  [1]]), 1, color), (self.ui_pos+200, 80)) 
+                        try: 
+                            screen.blit(self.font.render("HP:  {}".format(level.actor_board [self.mouse_index[0]]  [self.mouse_index[1]].hp), 1, (255, 100, 100)), (self.ui_pos+200, 120)) 
+                        except: 
+                            pass 
+                        try: 
+                            screen.blit(self.font.render("MP:  {}".format(level.actor_board [self.mouse_index[0]]  [self.mouse_index[1]].mp), 1, (100, 100, 255)), (self.ui_pos+200, 150)) 
+                        except: 
+                            pass 
             else: 
                 # If the tile isn't an actor, just display the floor information 
-                screen.blit(self.font.render(str(game_board[self.mouse_index[0]][self.mouse_index[1]]), 1, color), (self.ui_pos, 40)) 
+                if level.game_board[self.mouse_index[0]][self.mouse_index[1]].revealed: 
+                    screen.blit(self.font.render(str(level.game_board[self.mouse_index[0]][self.mouse_index[1]]), 1, color), (self.ui_pos, 40)) 
             # Display the position in the game board of the tile the mouse is over 
-            screen.blit(self.font.render('(' + (str(game_board[self.mouse_index[0]][self.mouse_index[1]].pos_index[0])) + ', ' + (str(game_board[self.mouse_index[0]][self.mouse_index[1]].pos_index[1])) + ')', 1, color), (self.ui_pos+120, 10)) 
+            screen.blit(self.font.render('(' + (str(level.game_board[self.mouse_index[0]][self.mouse_index[1]].pos_index[0])) + ', ' + (str(level.game_board[self.mouse_index[0]][self.mouse_index[1]].pos_index[1])) + ')', 1, color), (self.ui_pos+120, 10)) 
         else: 
             # If the mouse is not in the bounds of the game board 
             screen.blit(self.font.render('The ui', 1, color), (self.ui_pos, 40)) 
 
-    def draw_cursor(self, screen, game_board): 
-        # Get game_board index using cursor position, then draw cursor at game_board index position 
-
-        # Displays the cursor sprite on the tile the mouse is over 
-        #screen.blit(self.cursor, (x, y)) 
-        pass 
+    def in_bounds(self, mouse_cursor, level): 
+        #print(len(level.game_board[0]), len(level.game_board))
+        if (self.mouse_pos[0] < self.edge[0][0] and self.mouse_pos[0] > 0 and self.mouse_index[0] < self.board_size[0] and self.mouse_pos[1] > 0 and self.mouse_index[1] < self.board_size[1] and self.mouse_index[0] >= 0 and self.mouse_index[0] < len(level.game_board) and self.mouse_index[1] >= 0 and self.mouse_index[1] < len(level.game_board[0])): 
+            return True 
+        else: 
+            return False 

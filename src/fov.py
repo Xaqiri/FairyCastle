@@ -112,9 +112,13 @@ class FOV():
         self.visible_tiles = [] 
 
     def update(self, entity_pos, vision_range): 
+        for i in self.visible_tiles: 
+            try: 
+                i.revealed = False 
+            except: 
+                pass 
         self.visible_tiles = [] 
         self.visible_tiles.append(self.game_board[entity_pos[0]][entity_pos[1]]) 
-        self.visible_tiles.append(self.actor_board[1][1]) 
         for i in range(0, self.RAYS, self.STEP): 
             angle_x = self.sintable[i] 
             angle_y = self.costable[i] 
