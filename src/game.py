@@ -11,7 +11,7 @@ from levelLoader import *
 
 p.init() 
 # Version #.  Release.mainBranch.testBranch 
-VER =           '0.10.14' 
+VER =           '0.10.15' 
 p.display.set_caption('Fairy Castle' + ',    version:  ' + VER) 
 
 ''' TODO ''' 
@@ -139,6 +139,12 @@ def input():
                 direction = 'right' 
             if e.key == p.K_q: 
                 level.player.heal() 
+        if e.type == p.MOUSEBUTTONDOWN: 
+            try: 
+                if level.actor_board[ui.mouse_index[0]][ui.mouse_index[1]].id == 'enemy': 
+                    level.player.ranged_attack(level.actor_board[ui.mouse_index[0]][ui.mouse_index[1]], level) 
+            except: 
+                pass 
             #if e.key == p.K_SPACE: 
             #    direction = 'reload' 
     return direction 
@@ -160,7 +166,7 @@ def update(direction, clock):
     if len(level.enemies) <= 0: 
         print("You win") 
         sys.exit() 
-        
+
 def render(): 
     screen.fill(GRAY) 
     ui.render(screen, GREEN, level) 

@@ -58,6 +58,12 @@ class Player(Tile):
             enemy.hp -= self.melee 
         self.hp -= enemy.melee 
     
+    def ranged_attack(self, enemy, level): 
+        if self.mp > 0: 
+            enemy.hp -= self.magic * 4 
+            enemy.effects.append(level.itemSprites[1][4])
+            self.mp -= 1 
+
     def heal(self): 
         if 'hp_potion' in self.inventory: 
             if self.hp < self.max_hp: 
@@ -66,22 +72,36 @@ class Player(Tile):
                     self.hp = self.max_hp 
                 self.inventory['hp_potion'] -= 1 
 
-    def update(self, SCREEN_OFFSET, game_board): 
+    def update(self, SCREEN_OFFSET, level): 
+        #print(self.inventory) 
         self.alive = False if (self.hp <= 0) else True 
         self.pos_coordinates = self.pos_index[0]*self.tile_size+SCREEN_OFFSET[0], self.pos_index[1]*self.tile_size+SCREEN_OFFSET[1] 
-        if game_board[self.pos_index[0]][self.pos_index[1]].id == 'weapon': 
-            game_board[self.pos_index[0]][self.pos_index[1]].id = 'floor' 
-            game_board[self.pos_index[0]][self.pos_index[1]].sprite.pop() 
+        loc = level.game_board[self.pos_index[0]][self.pos_index[1]] 
+        if loc.id == 'weapon': 
+            loc.id = 'floor' 
+            loc.sprite.pop() 
+            self.sprite.append(level.itemSprites[4][3]) 
             if 'weapon' in self.inventory: 
                 self.inventory['weapon'] += 1 
             else: 
                 self.inventory['weapon'] = 1 
             self.melee += 2 
-        if game_board[self.pos_index[0]][self.pos_index[1]].id == 'hp_potion': 
-            game_board[self.pos_index[0]][self.pos_index[1]].id = 'floor' 
-            game_board[self.pos_index[0]][self.pos_index[1]].sprite.pop() 
+        if loc.id == 'hp_potion': 
+            loc.id = 'floor' 
+            loc.sprite.pop() 
             if 'hp_potion' in self.inventory: 
                 self.inventory['hp_potion'] += 1 
             else: 
                 self.inventory['hp_potion'] = 1 
+        if loc.id == 'barrel': 
+            if loc.charges > 0: 
+                loc.charges -= 1 
+                self.mp += 8 
+        if loc.id == 'crate': 
+            if loc.charges > 0: 
+                loc.charges -= 1 
+                if 'hp_potion' in self.inventory: 
+                    self.inventory['hp_potion'] += 2 
+                else: 
+                    self.inventory['hp_potion'] = 2 
         self.fov.update(self.pos_index, self.vision_range) 
