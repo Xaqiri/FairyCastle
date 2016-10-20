@@ -1,6 +1,7 @@
 import pygame as p 
 import sys 
 import os 
+from time import * 
 
 from tile import * 
 from ui import * 
@@ -11,7 +12,7 @@ from levelLoader import *
 
 p.init() 
 # Version #.  Release.mainBranch.testBranch 
-VER =           '0.10.16' 
+VER =           '0.10.17' 
 p.display.set_caption('Fairy Castle' + ',    version:  ' + VER) 
 
 ''' TODO ''' 
@@ -35,7 +36,7 @@ SCREEN_CENTER = (window_width//2, window_height//2)
 screen = p.display.set_mode(window_size) 
 
 sprites = dict(actorSheet=p.image.load(os.path.join('..', 'assets', 'spriteSheets', 
-                                                    'actorSpriteSheet8x6.png')).convert(), 
+                                                    'actorSpriteSheet13x6.png')).convert(), 
                 environmentSheet=p.image.load(os.path.join('..', 'assets', 'spriteSheets', 
                                                     'environmentSpriteSheet15x8.png')).convert(), 
                 itemSheet=p.image.load(os.path.join('..', 'assets', 'spriteSheets', 
@@ -49,7 +50,7 @@ for i in sprites:
     
 # Splits the sprite sheet into individual sprites 
 actor_sprite_sheet = SpriteLoader(sprites['actorSheet'], TILE_DIMENSION, (0, 0), 
-                                    16, 1, 8, 6).sprites 
+                                    16, 1, 13, 6).sprites 
 environment_sprite_sheet = SpriteLoader(sprites['environmentSheet'], TILE_DIMENSION, (0, 0), 
                                     16, 1, 15, 8).sprites 
 item_sprite_sheet = SpriteLoader(sprites['itemSheet'], TILE_DIMENSION, (0, 0), 
@@ -65,50 +66,9 @@ SCREEN_OFFSET = [SCREEN_CENTER[0]-level.player.pos_index[0]*TILE_DIMENSION-4*TIL
 level.player.pos_coordinates = SCREEN_OFFSET 
 ui = UI(window_size, (level.board_width, level.board_height), 32, TILE_DIMENSION, SCREEN_OFFSET, sprites['cursor']) 
 
-# Should be moved to player class 
-def can_move(tile, direction): 
-    # Need to rework this function to handle movement checking more elegantly 
-    game_up = level.game_board[tile.pos_index[0]][tile.pos_index[1] - 1] 
-    game_down = level.game_board[tile.pos_index[0]][tile.pos_index[1] + 1] 
-    game_left = level.game_board[tile.pos_index[0] - 1][tile.pos_index[1]] 
-    game_right = level.game_board[tile.pos_index[0] + 1][tile.pos_index[1]] 
-    act_up = level.actor_board[tile.pos_index[0]][tile.pos_index[1] - 1] 
-    act_down = level.actor_board[tile.pos_index[0]][tile.pos_index[1] + 1] 
-    act_left = level.actor_board[tile.pos_index[0] - 1][tile.pos_index[1]] 
-    act_right = level.actor_board[tile.pos_index[0] + 1][tile.pos_index[1]] 
-    if direction == 'up': 
-        if type(act_up) != int: 
-            if act_up.id == 'enemy': 
-                level.player.attack(act_up) 
-            else: 
-                return game_up.is_walkable and act_up.is_walkable 
-        else: 
-            return game_up.is_walkable 
-    if direction == 'down': 
-        if type(act_down) != int: 
-            if act_down.id == 'enemy': 
-                level.player.attack(act_down)
-            else: 
-                return game_down.is_walkable and act_down.is_walkable 
-        else: 
-            return game_down.is_walkable 
-    if direction == 'left': 
-        if type(act_left) != int: 
-            if act_left.id == 'enemy': 
-                level.player.attack(act_left) 
-            else: 
-                return game_left.is_walkable and act_left.is_walkable 
-        else: 
-            return game_left.is_walkable 
-    if direction == 'right': 
-        if type(act_right) != int: 
-            if act_right.id == 'enemy': 
-                level.player.attack(act_right) 
-            else: 
-                return game_right.is_walkable and act_right.is_walkable 
-        else: 
-            return game_right.is_walkable 
-    
+states = ['game', 'lose', 'win'] 
+state = states[0] 
+
 def move_board(direction): 
     global SCREEN_OFFSET 
     if  direction == 'up': 
@@ -122,6 +82,9 @@ def move_board(direction):
     
 def input(): 
     direction = '' 
+    if level.player.wait > 0: 
+        level.player.wait -= 1 
+        return 
     p.event.pump() 
     for e in p.event.get(): 
         if e.type == p.QUIT: 
@@ -150,27 +113,44 @@ def input():
     return direction 
 
 def update(direction, clock): 
-    ui.update(clock, SCREEN_OFFSET, level.game_board) 
-    if direction in ['up', 'down', 'left', 'right'] and can_move(level.player, direction): 
-        level.actor_board[level.player.pos_index[0]][level.player.pos_index[1]] = 0 
-        level.player.move(direction) 
-        move_board(direction) 
-        level.actor_board[level.player.pos_index[0]][level.player.pos_index[1]] = level.player 
-    for e in level.enemies: 
-        if not e.alive: 
+    global state 
+    dir = ['up', 'down', 'left', 'right'] 
+    if state == states[0]: 
+        ui.update(clock, SCREEN_OFFSET, level.game_board) 
+        if direction in dir and level.player.can_move(level, direction): 
+            level.actor_board[level.player.pos_index[0]][level.player.pos_index[1]] = 0 
+            level.player.move(direction) 
+            level.actor_board[level.player.pos_index[0]][level.player.pos_index[1]] = level.player 
+            move_board(direction) 
+        level.player.update(SCREEN_OFFSET, level) 
+        for i in level.player.fov.visible_tiles: 
+            try: 
+                i.update(SCREEN_OFFSET) 
+            except: 
+                pass 
+        for e in level.enemies: 
             level.actor_board[e.pos_index[0]][e.pos_index[1]] = 0 
-            level.enemies.remove(e) 
-    if not level.player.alive: 
-        print("You lose") 
-        sys.exit() 
-    if len(level.enemies) <= 0: 
-        print("You win") 
-        sys.exit() 
+            e.update(SCREEN_OFFSET, level, dir) 
+            level.actor_board[e.pos_index[0]][e.pos_index[1]] = e 
+            if not e.alive: 
+                level.actor_board[e.pos_index[0]][e.pos_index[1]] = 0 
+                level.enemies.remove(e) 
+                
+        if not level.player.alive: 
+            state = states[1] 
+        if len(level.enemies) <= 0: 
+            state = states[2] 
 
 def render(): 
+    global state 
     screen.fill(GRAY) 
-    ui.render(screen, GREEN, level) 
-    level.render(screen, level.player, TILE_DIMENSION, SCREEN_OFFSET, ui) 
+    if state == states[0]: 
+        ui.render(screen, GREEN, level) 
+        level.render(screen, level.player, TILE_DIMENSION, SCREEN_OFFSET, ui) 
+    elif state == states[1]: 
+        screen.blit(ui.font.render("Game Over", 1, GREEN), (window_width//2, window_height//2)) 
+    elif state == states[2]: 
+        screen.blit(ui.font.render("You win", 1, GREEN), (window_width//2, window_height//2)) 
     p.display.flip() 
     
 clock = p.time.Clock() 

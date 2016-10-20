@@ -22,12 +22,18 @@ class Player(Tile):
         self.job = 'peasant' 
         self.name = 'A {0}'.format(self.job) 
         self.alive = True if (self.hp > 0) else False 
-        self.is_walkable = walkable if not self.alive else False 
+        self.is_walkable = False 
         self.vision_range = 5 
         self.fov = fov.FOV(game_board, actor_board) 
         self.revealed = True 
         self.crit_chance = 4 
         self.inventory = dict() 
+        self.enemy_id = 'enemy' 
+        self.surr_game_tiles = [] 
+        self.surr_actor_tiles = [] 
+        self.speed = 10 
+        self.attack_speed = 20 
+        self.wait = 0 
 
         self.melee = 1 
         self.archery = 1 
@@ -39,7 +45,41 @@ class Player(Tile):
         self.woodcutting = 1 
         self.farming = 1 
         self.fletching = 1 
-        
+    
+    def can_move(self, level, direction): 
+        if direction == 'up': 
+            if type(self.surr_actor_tiles[0]) != int: 
+                if self.surr_actor_tiles[0].id == self.enemy_id: 
+                    self.attack(self.surr_actor_tiles[0]) 
+                else: 
+                    return self.surr_game_tiles[0].is_walkable and self.surr_actor_tiles[0].is_walkable 
+            else: 
+                return self.surr_game_tiles[0].is_walkable 
+        if direction == 'down': 
+            if type(self.surr_actor_tiles[1]) != int: 
+                if self.surr_actor_tiles[1].id == self.enemy_id: 
+                    self.attack(self.surr_actor_tiles[1])
+                else: 
+                    return self.surr_game_tiles[1].is_walkable and self.surr_actor_tiles[1].is_walkable 
+            else: 
+                return self.surr_game_tiles[1].is_walkable 
+        if direction == 'left': 
+            if type(self.surr_actor_tiles[2]) != int: 
+                if self.surr_actor_tiles[2].id == self.enemy_id: 
+                    self.attack(self.surr_actor_tiles[2]) 
+                else: 
+                    return self.surr_game_tiles[2].is_walkable and self.surr_actor_tiles[2].is_walkable 
+            else: 
+                return self.surr_game_tiles[2].is_walkable 
+        if direction == 'right': 
+            if type(self.surr_actor_tiles[3]) != int: 
+                if self.surr_actor_tiles[3].id == self.enemy_id: 
+                    self.attack(self.surr_actor_tiles[3]) 
+                else: 
+                    return self.surr_game_tiles[3].is_walkable and self.surr_actor_tiles[3].is_walkable 
+            else: 
+                return self.surr_game_tiles[3].is_walkable 
+
     def move(self, direction): 
         if direction == 'up': 
             self.pos_index[1] -= 1  
@@ -49,6 +89,8 @@ class Player(Tile):
             self.pos_index[0] -= 1 
         if direction == 'right': 
             self.pos_index[0] += 1 
+        self.wait = self.speed 
+        
         
     def attack(self, enemy): 
         crit_roll = random.randint(1, 10) 
@@ -56,12 +98,12 @@ class Player(Tile):
             enemy.hp -= self.melee * 2 
         else: 
             enemy.hp -= self.melee 
-        self.hp -= enemy.melee 
-    
+        self.wait = self.attack_speed 
+
     def ranged_attack(self, enemy, level): 
         if self.mp > 0: 
             enemy.hp -= self.magic * 4 
-            enemy.effects.append(level.itemSprites[1][4])
+            enemy.effects.append(level.itemSprites[2][4])
             self.mp -= 1 
 
     def heal(self): 
@@ -73,9 +115,20 @@ class Player(Tile):
                 self.inventory['hp_potion'] -= 1 
 
     def update(self, SCREEN_OFFSET, level): 
-        #print(self.inventory) 
         self.alive = False if (self.hp <= 0) else True 
         self.pos_coordinates = self.pos_index[0]*self.tile_size+SCREEN_OFFSET[0], self.pos_index[1]*self.tile_size+SCREEN_OFFSET[1] 
+        self.surr_game_tiles = [ 
+            level.game_board[self.pos_index[0]][self.pos_index[1]-1], 
+            level.game_board[self.pos_index[0]][self.pos_index[1]+1], 
+            level.game_board[self.pos_index[0]-1][self.pos_index[1]], 
+            level.game_board[self.pos_index[0]+1][self.pos_index[1]]
+            ] 
+        self.surr_actor_tiles = [ 
+            level.actor_board[self.pos_index[0]][self.pos_index[1]-1], 
+            level.actor_board[self.pos_index[0]][self.pos_index[1]+1], 
+            level.actor_board[self.pos_index[0]-1][self.pos_index[1]], 
+            level.actor_board[self.pos_index[0]+1][self.pos_index[1]]
+            ] 
         loc = level.game_board[self.pos_index[0]][self.pos_index[1]] 
         if loc.id == 'weapon': 
             loc.id = 'floor' 
@@ -104,4 +157,7 @@ class Player(Tile):
                     self.inventory['hp_potion'] += 2 
                 else: 
                     self.inventory['hp_potion'] = 2 
+        if loc.id == 'door': 
+            if not loc.open: 
+                loc.open = True 
         self.fov.update(self.pos_index, self.vision_range) 

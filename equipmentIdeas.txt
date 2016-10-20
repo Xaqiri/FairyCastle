@@ -26,7 +26,7 @@ Individual Items
         Sword 
         Dagger 
         Axe 
-            Has a chance to disable and enemy's shield for a few 
+            Has a chance to disable and enemy's shield for a few turns 
         Hammer 
         Spear 
         Wand 
