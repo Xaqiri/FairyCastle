@@ -2,6 +2,7 @@ import pygame as p
 from tile import * 
 from player import * 
 from goblin import * 
+from skeleton import * 
 from container import * 
 from door import * 
 
@@ -48,6 +49,10 @@ class LevelLoader(object):
                     self.game_board[x][y] = Tile([self.environmentSprites[3][6]], (x, y), TILE_DIMENSION, 'The floor', 'floor') 
                     self.actor_board[x][y] = Goblin([self.actorSprites[1][0]], (x, y), TILE_DIMENSION) 
                     self.enemies.append(self.actor_board[x][y]) 
+                elif lines[y][x] == 's': 
+                    self.game_board[x][y] = Tile([self.environmentSprites[3][6]], (x, y), TILE_DIMENSION, 'The floor', 'floor') 
+                    self.actor_board[x][y] = Skeleton([self.actorSprites[2][0]], (x, y), TILE_DIMENSION) 
+                    self.enemies.append(self.actor_board[x][y]) 
                 elif lines[y][x] == '~': 
                     self.game_board[x][y] = Tile([self.environmentSprites[1][1]], (x, y), TILE_DIMENSION, 'Some water', 'tile', False) 
                 elif lines[y][x] == '|': 
@@ -73,4 +78,9 @@ class LevelLoader(object):
                 i.render(screen) 
             except: 
                 pass 
+        #for i in self.player.fov.seen_tiles: 
+        #    try: 
+        #        i.render(screen) 
+        #    except: 
+        #        pass 
         self.player.render(screen) 

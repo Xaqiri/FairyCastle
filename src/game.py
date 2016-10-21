@@ -12,7 +12,7 @@ from levelLoader import *
 
 p.init() 
 # Version #.  Release.mainBranch.testBranch 
-VER =           '0.10.17' 
+VER =           '0.10.18' 
 p.display.set_caption('Fairy Castle' + ',    version:  ' + VER) 
 
 ''' TODO ''' 
@@ -22,6 +22,8 @@ p.display.set_caption('Fairy Castle' + ',    version:  ' + VER)
 # Add heartbeat code 
 # Add the ability for tiles to remember if they've been revealed by the player already seeing them. 
 # Revealed tiles would show up darker than tiles currently in the player's los 
+# Or possibly have tiles fade out after they leave the player's fov 
+# e.g. a tile's visible to the player.  They move one tile to the right, so the tiles that are now outside of the player's fov fade out over two seconds or so 
 
 ''' Colors ''' 
 TRANS = (128, 0, 128) 
@@ -64,7 +66,7 @@ level.load(TILE_DIMENSION)
 # Offsets the game board by a certain amount 
 SCREEN_OFFSET = [SCREEN_CENTER[0]-level.player.pos_index[0]*TILE_DIMENSION-4*TILE_DIMENSION+32, SCREEN_CENTER[1]-level.player.pos_index[1]*TILE_DIMENSION] 
 level.player.pos_coordinates = SCREEN_OFFSET 
-ui = UI(window_size, (level.board_width, level.board_height), 32, TILE_DIMENSION, SCREEN_OFFSET, sprites['cursor']) 
+ui = UI(window_size, (level.board_width, level.board_height), 24, TILE_DIMENSION, SCREEN_OFFSET, sprites['cursor']) 
 
 states = ['game', 'lose', 'win'] 
 state = states[0] 
@@ -104,7 +106,7 @@ def input():
                 level.player.heal() 
         if e.type == p.MOUSEBUTTONDOWN: 
             try: 
-                if level.actor_board[ui.mouse_index[0]][ui.mouse_index[1]].id == 'enemy' and level.actor_board[ui.mouse_index[0]][ui.mouse_index[1]].revealed: 
+                if level.actor_board[ui.mouse_index[0]][ui.mouse_index[1]].id in level.player.enemy_id and level.actor_board[ui.mouse_index[0]][ui.mouse_index[1]].revealed: 
                     level.player.ranged_attack(level.actor_board[ui.mouse_index[0]][ui.mouse_index[1]], level) 
             except: 
                 pass 

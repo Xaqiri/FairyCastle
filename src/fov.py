@@ -110,8 +110,12 @@ class FOV():
             0.99939, 0.99985, 1.00000
         ] 
         self.visible_tiles = [] 
-
+        #self.seen_tiles = [] 
+        self.vis_dur = 10 
+        #self.alpha = 255 
+        
     def update(self, entity_pos, vision_range): 
+        #self.seen_tiles = self.visible_tiles 
         for i in self.visible_tiles: 
             try: 
                 i.revealed = False 

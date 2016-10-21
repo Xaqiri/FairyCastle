@@ -28,13 +28,14 @@ class Player(Tile):
         self.revealed = True 
         self.crit_chance = 4 
         self.inventory = dict() 
-        self.enemy_id = 'enemy' 
+        self.enemy_id = ['enemy', 'skeleton'] 
         self.surr_game_tiles = [] 
         self.surr_actor_tiles = [] 
         self.speed = 10 
         self.attack_speed = 20 
+        self.cast_speed = 40 
         self.wait = 0 
-
+        
         self.melee = 1 
         self.archery = 1 
         self.magic = 1 
@@ -49,7 +50,7 @@ class Player(Tile):
     def can_move(self, level, direction): 
         if direction == 'up': 
             if type(self.surr_actor_tiles[0]) != int: 
-                if self.surr_actor_tiles[0].id == self.enemy_id: 
+                if self.surr_actor_tiles[0].id in self.enemy_id: 
                     self.attack(self.surr_actor_tiles[0]) 
                 else: 
                     return self.surr_game_tiles[0].is_walkable and self.surr_actor_tiles[0].is_walkable 
@@ -57,7 +58,7 @@ class Player(Tile):
                 return self.surr_game_tiles[0].is_walkable 
         if direction == 'down': 
             if type(self.surr_actor_tiles[1]) != int: 
-                if self.surr_actor_tiles[1].id == self.enemy_id: 
+                if self.surr_actor_tiles[1].id in self.enemy_id: 
                     self.attack(self.surr_actor_tiles[1])
                 else: 
                     return self.surr_game_tiles[1].is_walkable and self.surr_actor_tiles[1].is_walkable 
@@ -65,7 +66,7 @@ class Player(Tile):
                 return self.surr_game_tiles[1].is_walkable 
         if direction == 'left': 
             if type(self.surr_actor_tiles[2]) != int: 
-                if self.surr_actor_tiles[2].id == self.enemy_id: 
+                if self.surr_actor_tiles[2].id in self.enemy_id: 
                     self.attack(self.surr_actor_tiles[2]) 
                 else: 
                     return self.surr_game_tiles[2].is_walkable and self.surr_actor_tiles[2].is_walkable 
@@ -73,7 +74,7 @@ class Player(Tile):
                 return self.surr_game_tiles[2].is_walkable 
         if direction == 'right': 
             if type(self.surr_actor_tiles[3]) != int: 
-                if self.surr_actor_tiles[3].id == self.enemy_id: 
+                if self.surr_actor_tiles[3].id in self.enemy_id: 
                     self.attack(self.surr_actor_tiles[3]) 
                 else: 
                     return self.surr_game_tiles[3].is_walkable and self.surr_actor_tiles[3].is_walkable 
@@ -105,6 +106,7 @@ class Player(Tile):
             enemy.hp -= self.magic * 4 
             enemy.effects.append(level.itemSprites[2][4])
             self.mp -= 1 
+            self.wait = self.cast_speed 
 
     def heal(self): 
         if 'hp_potion' in self.inventory: 

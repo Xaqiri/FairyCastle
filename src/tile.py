@@ -19,6 +19,7 @@ class Tile():
         self.id = id 
         self.hp = 0 
         self.revealed = False 
+        self.alpha = 255 
         if self.id == 'wall' or self.id == 'door' or self.id == 'enemy': 
             self.blocks_sight = True 
         else: 

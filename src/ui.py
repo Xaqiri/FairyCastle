@@ -65,13 +65,13 @@ class UI():
                     if level.actor_board[self.mouse_index[0]][self.mouse_index[1]].id == 'player': 
                         screen.blit(self.font.render(str(level.actor_board[self.mouse_index[0]]     [self.mouse_index  [1]]), 1, color), (self.ui_pos, 80)) 
                     else: 
-                        screen.blit(self.font.render(str(level.actor_board[self.mouse_index[0]]     [self.mouse_index  [1]]), 1, color), (self.ui_pos+200, 80)) 
+                        screen.blit(self.font.render(str(level.actor_board[self.mouse_index[0]]     [self.mouse_index  [1]]), 1, color), (self.ui_pos+125, 80)) 
                         try: 
-                            screen.blit(self.font.render("HP:  {}".format(level.actor_board [self.mouse_index[0]]  [self.mouse_index[1]].hp), 1, (255, 100, 100)), (self.ui_pos+200, 120)) 
+                            screen.blit(self.font.render("HP:  {}".format(level.actor_board [self.mouse_index[0]]  [self.mouse_index[1]].hp), 1, (255, 100, 100)), (self.ui_pos+125, 120)) 
                         except: 
                             pass 
                         try: 
-                            screen.blit(self.font.render("MP:  {}".format(level.actor_board [self.mouse_index[0]]  [self.mouse_index[1]].mp), 1, (100, 100, 255)), (self.ui_pos+200, 150)) 
+                            screen.blit(self.font.render("MP:  {}".format(level.actor_board [self.mouse_index[0]]  [self.mouse_index[1]].mp), 1, (100, 100, 255)), (self.ui_pos+125, 150)) 
                         except: 
                             pass 
             else: 

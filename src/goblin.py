@@ -19,12 +19,11 @@ class Goblin(Player):
         self.alive = True 
         self.effects = [] 
         self.count = 0 
-        self.enemy_id = 'player' 
+        self.enemy_id = ['player', 'skeleton'] 
         self.revealed = False 
         self.crit_chance = 10 
         self.speed = 40 
-
-
+        
     def update(self, SCREEN_OFFSET, level, dir): 
         self.alive = False if (self.hp <= 0) else True 
         self.surr_game_tiles = [ 
