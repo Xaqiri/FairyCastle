@@ -1,18 +1,38 @@
 Outline for planned Entity Component System 
 
-CombatSystem: 
-    damage(attacker, target) 
-        Attacker deals damage to target 
-    statsComponent: 
-        hp, mp 
-PhysicsSystem: 
-    positionComponent: 
-        position 
+Base Classes: 
+    Tile: 
+        Walls and floors 
+    Entity: 
+        Player, enemies, items 
 
-    draw() 
-        Draws the entity to the screen 
-    open(obj) 
-        Change obj's sprite to its 'open' sprite 
-    close(obj) 
-        Change obj's sprite to its 'closed' sprite 
-    
+Components: 
+    combat_component: 
+        fields: 
+            base_hp 
+            current_hp 
+            base_mana 
+            current_mana 
+            defense 
+        methods: 
+            attack() 
+    item_component: 
+        fields: 
+            use_function 
+        methods: 
+            use() 
+    heal_component: 
+        fields: 
+            heal_amount 
+            heal_type 
+    spawn_component: 
+        fields: 
+            min_level - Earliest level parent can spawn 
+            max_level - Latest level parent can spawn 
+            chance - Chance parent can spawn 
+
+Health potion example: 
+entity 
+--item_component() 
+----heal_component(heal_amount=10, heal_type='hp') 
+--spawn_component(min_level=1, max_level=10, chance=70) 

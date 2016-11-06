@@ -1,14 +1,14 @@
 import pygame as p 
+import random 
 import sys 
 import os 
 from time import * 
 
-from tile import * 
+import pyRL 
 from ui import * 
-from player import * 
-from goblin import * 
-from spriteLoader import * 
-from levelLoader import * 
+from tile import * 
+from entity import * 
+from combat_component import * 
 
 p.init() 
 # Version #.  Release.mainBranch.testBranch 
@@ -16,27 +16,29 @@ VER =           '0.10.18'
 p.display.set_caption('Fairy Castle' + ',    version:  ' + VER) 
 
 ''' TODO ''' 
+# Fix phantom wall bug:  Some times the player can walk through tiles that are displayed as walls, and can't walk through tiles displayed as floors 
 # Add comments 
 # Make code cleaner 
-# Reconsider having game_board and actor_board be separate 
-# Add heartbeat code 
-# Add the ability for tiles to remember if they've been revealed by the player already seeing them. 
-# Revealed tiles would show up darker than tiles currently in the player's los 
-# Or possibly have tiles fade out after they leave the player's fov 
+# Make tiles outside of the player's fov more interesting, possibly have tiles fade out after they leave the player's fov 
 # e.g. a tile's visible to the player.  They move one tile to the right, so the tiles that are now outside of the player's fov fade out over two seconds or so 
 
 ''' Colors ''' 
 TRANS = (128, 0, 128) 
-BLACK = (0, 0, 0) 
-GREEN = (0, 255, 0) 
-GRAY  = (16, 16, 16) 
+BLACK = pyRL.colors.Colors.BLACK 
+GREEN = pyRL.colors.Colors.GREEN 
+GRAY  = pyRL.colors.Colors.DRKR_GRAY 
 
 SCALE = 2 
 TILE_DIMENSION = int(16*SCALE) 
-window_size = window_width, window_height = 1280, 960 
+window_size = window_width, window_height = 1200, 700 
 SCREEN_CENTER = (window_width//2, window_height//2) 
 screen = p.display.set_mode(window_size) 
-
+game_panel = pyRL.panel.Panel(0, 0, window_width, window_height-100, pyRL.colors.Colors.BLACK, screen) 
+message_panel = pyRL.panel.Panel(0, game_panel.height, window_width, window_height-game_panel.height, pyRL.colors.Colors.GRAY, screen) 
+panels = [game_panel, message_panel] 
+font_size = TILE_DIMENSION 
+font = p.font.SysFont('comicsans', font_size) 
+        
 sprites = dict(actorSheet=p.image.load(os.path.join('..', 'assets', 'spriteSheets', 
                                                     'actorSpriteSheet13x6.png')).convert(), 
                 environmentSheet=p.image.load(os.path.join('..', 'assets', 'spriteSheets', 
@@ -45,48 +47,99 @@ sprites = dict(actorSheet=p.image.load(os.path.join('..', 'assets', 'spriteSheet
                                                     'itemSpriteSheet12x8.png')).convert(), 
                 cursor=p.image.load(os.path.join('..', 'assets', '1', 
                                                     'cursor.png')).convert()) 
-levels = dict(level_t=os.path.join('..', 'levels', 'level_1.txt')) 
+
 # Goes through each sprite and sets a certain color to be transparent and scales it to the appropriate dimensions 
 for i in sprites: 
     sprites[i].set_colorkey(TRANS) 
     
 # Splits the sprite sheet into individual sprites 
-actor_sprite_sheet = SpriteLoader(sprites['actorSheet'], TILE_DIMENSION, (0, 0), 
+actor_sprite_sheet = pyRL.sprite_loader.SpriteLoader(sprites['actorSheet'], TILE_DIMENSION, (0, 0), 
                                     16, 1, 13, 6).sprites 
-environment_sprite_sheet = SpriteLoader(sprites['environmentSheet'], TILE_DIMENSION, (0, 0), 
+environment_sprite_sheet = pyRL.sprite_loader.SpriteLoader(sprites['environmentSheet'], TILE_DIMENSION, (0, 0), 
                                     16, 1, 15, 8).sprites 
-item_sprite_sheet = SpriteLoader(sprites['itemSheet'], TILE_DIMENSION, (0, 0), 
+item_sprite_sheet = pyRL.sprite_loader.SpriteLoader(sprites['itemSheet'], TILE_DIMENSION, (0, 0), 
                                     16, 1, 12, 8).sprites 
 
-level = LevelLoader(levels['level_t'], window_size, actor_sprite_sheet, environment_sprite_sheet, 
-                    item_sprite_sheet) 
-level.load(TILE_DIMENSION) 
-
-# Subtracting 4*TILE_DIMENSION to move the player to the center of the playable window rather than the entire window.  Don't know where the 32 comes from 
-# Offsets the game board by a certain amount 
-SCREEN_OFFSET = [SCREEN_CENTER[0]-level.player.pos_index[0]*TILE_DIMENSION-4*TILE_DIMENSION+32, SCREEN_CENTER[1]-level.player.pos_index[1]*TILE_DIMENSION] 
-level.player.pos_coordinates = SCREEN_OFFSET 
-ui = UI(window_size, (level.board_width, level.board_height), 24, TILE_DIMENSION, SCREEN_OFFSET, sprites['cursor']) 
-
+combat_component = CombatComponent() 
+player = Entity(x=1, y=1, sprites=[actor_sprite_sheet[0][0]], tile_size=TILE_DIMENSION, name='player', color=pyRL.colors.Colors.DRK_BLUE, combat_component=combat_component, font=font) 
+entities = [player] 
+#ui = UI(window_size, (level.board_width, level.board_height), 24, TILE_DIMENSION, screen_offset, sprites['cursor']) 
+level = pyRL.random_level_gen.RandomLevelGen(room_min_size=10, room_max_size=10, max_rooms=400, level_width=100, level_height=100, tile_size=TILE_DIMENSION, sprites=[environment_sprite_sheet[1][6], environment_sprite_sheet[4][6]]) 
+player.x, player.y = level.make_level(entities=entities) 
+screen_offset = [game_panel.center[0]-player.x*TILE_DIMENSION, game_panel.center[1]-player.y*TILE_DIMENSION] 
+#player.x, player.y = screen_offset 
+player.pos_coordinates = [player.x*player.tile_size+screen_offset[0], player.y*player.tile_size+screen_offset[1]] 
+player.visible = True 
+    
 states = ['game', 'lose', 'win'] 
 state = states[0] 
+fov = pyRL.fov.FOV() 
 
-def move_board(direction): 
-    global SCREEN_OFFSET 
+def in_bounds(tile): 
+    if type(tile.pos_coordinates) == int: 
+        return False 
+    if (tile.pos_coordinates[0] > -TILE_DIMENSION and tile.pos_coordinates[0] < game_panel.width+TILE_DIMENSION and
+        tile.pos_coordinates[1] > -TILE_DIMENSION and tile.pos_coordinates[1] < game_panel.height+TILE_DIMENSION): 
+        return True 
+    else: 
+        return False 
+
+def is_blocked(tile): 
+    if not tile.is_walkable: 
+        return True 
+    else: 
+        return False 
+
+def place_objects(room, entities): 
+    num_monsters = 1 
+    for i in range(num_monsters): 
+        x = random.randint(room.x1, room.x2) 
+        y = random.randint(room.y1, room.y2) 
+        combat_component = CombatComponent() 
+        monster = Entity(x, y, TILE_DIMENSION, [actor_sprite_sheet[1][0]], 'g', pyRL.colors.Colors.DRK_GREEN, False, 'goblin', False, combat_component, font) 
+        if not is_blocked(level.level[x][y]): 
+            entities.append(monster) 
+
+def can_move(entity, direction): 
+    global fov_recompute 
     if  direction == 'up': 
-        SCREEN_OFFSET[1] += TILE_DIMENSION 
+        if level.level[entity.x][entity.y-1].is_walkable: 
+            fov_recompute = True 
+            return True 
+        else: 
+            return False 
+    elif  direction == 'down': 
+        if level.level[entity.x][entity.y+1].is_walkable: 
+            fov_recompute = True 
+            return True 
+        else: 
+            return False 
+    elif  direction == 'left': 
+        if level.level[entity.x-1][entity.y].is_walkable: 
+            fov_recompute = True 
+            return True 
+        else: 
+            return False 
+    elif  direction == 'right': 
+        if level.level[entity.x+1][entity.y].is_walkable: 
+            fov_recompute = True 
+            return True 
+        else: 
+            return False 
+     
+def move_board(direction): 
+    global screen_offset 
+    if  direction == 'up': 
+        screen_offset[1] += TILE_DIMENSION 
     if  direction == 'down': 
-        SCREEN_OFFSET[1] -= TILE_DIMENSION
+        screen_offset[1] -= TILE_DIMENSION
     if  direction == 'left': 
-        SCREEN_OFFSET[0] += TILE_DIMENSION
+        screen_offset[0] += TILE_DIMENSION
     if  direction == 'right': 
-        SCREEN_OFFSET[0] -= TILE_DIMENSION 
+        screen_offset[0] -= TILE_DIMENSION 
     
 def input(): 
     direction = '' 
-    if level.player.wait > 0: 
-        level.player.wait -= 1 
-        return 
     p.event.pump() 
     for e in p.event.get(): 
         if e.type == p.QUIT: 
@@ -96,73 +149,76 @@ def input():
                 sys.exit() 
             if e.key == p.K_UP: 
                 direction = 'up' 
+                if can_move(player, direction): 
+                    player.move(0, -1) 
+                else: 
+                    direction = ' ' 
             if e.key == p.K_DOWN: 
                 direction = 'down' 
+                if can_move(player, direction): 
+                    player.move(0, 1) 
+                else: 
+                    direction = ' ' 
             if e.key == p.K_LEFT: 
                 direction = 'left' 
+                if can_move(player, direction): 
+                    player.move(-1, 0) 
+                else: 
+                    direction = ' ' 
             if e.key == p.K_RIGHT: 
                 direction = 'right' 
-            if e.key == p.K_q: 
-                level.player.heal() 
-        if e.type == p.MOUSEBUTTONDOWN: 
-            try: 
-                if level.actor_board[ui.mouse_index[0]][ui.mouse_index[1]].id in level.player.enemy_id and level.actor_board[ui.mouse_index[0]][ui.mouse_index[1]].revealed: 
-                    level.player.ranged_attack(level.actor_board[ui.mouse_index[0]][ui.mouse_index[1]], level) 
-            except: 
-                pass 
-            #if e.key == p.K_SPACE: 
-            #    direction = 'reload' 
+                if can_move(player, direction): 
+                    player.move(1, 0) 
+                else: 
+                    direction = ' ' 
+    if direction is not '': 
+        move_board(direction) 
     return direction 
 
 def update(direction, clock): 
-    global state 
+    global state, mouse_pos, fps_counter, screen_offset, fov_recompute 
     dir = ['up', 'down', 'left', 'right'] 
-    if state == states[0]: 
-        ui.update(clock, SCREEN_OFFSET, level.game_board) 
-        if direction in dir and level.player.can_move(level, direction): 
-            level.actor_board[level.player.pos_index[0]][level.player.pos_index[1]] = 0 
-            level.player.move(direction) 
-            level.actor_board[level.player.pos_index[0]][level.player.pos_index[1]] = level.player 
-            move_board(direction) 
-        level.player.update(SCREEN_OFFSET, level) 
-        for i in level.player.fov.visible_tiles: 
-            try: 
-                i.update(SCREEN_OFFSET) 
-            except: 
-                pass 
-        for e in level.enemies: 
-            level.actor_board[e.pos_index[0]][e.pos_index[1]] = 0 
-            e.update(SCREEN_OFFSET, level, dir) 
-            level.actor_board[e.pos_index[0]][e.pos_index[1]] = e 
-            if not e.alive: 
-                level.actor_board[e.pos_index[0]][e.pos_index[1]] = 0 
-                level.enemies.remove(e) 
-                
-        if not level.player.alive: 
-            state = states[1] 
-        if len(level.enemies) <= 0: 
-            state = states[2] 
+    if fov_recompute: 
+        fov_recompute = False 
+        fov.update(entities=entities, vision_range=8, level=level.level) 
+        for ex in fov.explored_tiles: 
+            ex.update(screen_offset) 
+    for e in entities: 
+        e.visible = level.level[e.x][e.y].visible 
+        e.update(screen_offset) 
+    mouse_pos = p.mouse.get_pos() 
+    fps_counter = clock.get_fps() 
 
 def render(): 
     global state 
     screen.fill(GRAY) 
-    if state == states[0]: 
-        ui.render(screen, GREEN, level) 
-        level.render(screen, level.player, TILE_DIMENSION, SCREEN_OFFSET, ui) 
-    elif state == states[1]: 
-        screen.blit(ui.font.render("Game Over", 1, GREEN), (window_width//2, window_height//2)) 
-    elif state == states[2]: 
-        screen.blit(ui.font.render("You win", 1, GREEN), (window_width//2, window_height//2)) 
+    game_panel.render() 
+    for v in fov.visible_tiles: 
+        if in_bounds(v): 
+            v.render(screen, 1) 
+    for ex in fov.explored_tiles: 
+        if in_bounds(ex) and not ex.visible: 
+            ex.render(screen, 1) 
+    for e in entities: 
+        if e is not player: 
+            e.render(screen, 1) 
+    player.render(screen, 1) 
+    message_panel.render() 
+    screen.blit(font.render(str((mouse_pos[0], mouse_pos[1])), 1, pyRL.colors.Colors.GREEN), (message_panel.width-100, message_panel.top_y+10)) 
+    screen.blit(font.render(str(('{:.2f}'.format(fps_counter))), 1, pyRL.colors.Colors.GREEN), (message_panel.width-50, message_panel.top_y+50)) 
     p.display.flip() 
     
+for r in level.rooms: 
+    place_objects(r, entities) 
+
 clock = p.time.Clock() 
 done = False 
+mouse_pos = p.mouse.get_pos() 
+fps_counter = clock.get_fps() 
+fov_recompute = True 
 while not done: 
     direction = input() 
-    if direction == 'reload': 
-        reload_level() 
-    else: 
-        update(direction, clock) 
+    update(direction, clock) 
     render() 
     clock.tick(60) 
 

@@ -1,0 +1,116 @@
+Inspirations: 
+    Diablo: 
+        Random levels 
+        Random equipment, with different tiers and affixes 
+            Normal -> Magic -> Rare -> Unique -> Legendary 
+            Affixes like VAMPIRIC blade OF MANA LEECH 
+        Town hub with warp points in the dungeon 
+        Game split into 4 acts 
+            Each act spans 5 dungeon levels 
+                Act 1 - Levels 1, 2, 3, 4, 5 
+                    Abandoned Mine 
+                        Levels generated haphazardly, with many rooms and corridoors 
+                Act 2 - Levels 6, 7, 8, 9, 10 
+                    The Caves 
+                        Use cellular automata to generate large cave-like levels 
+                Act 3 - Levels 11, 12, 13, 14, 15 
+                    Underground Forest 
+                        Similar to Act 2, but with trees 
+                Act 4 - Levels 16, 17, 18, 19, 20 
+                    Blighttown 
+                        Maps full of rooms connected to each other, few corridoors 
+        Beat all acts on one difficulty to progress to the next difficulty 
+            Easy -> Normal -> Hard 
+    Rogue: 
+        Player only gets one life 
+    Dark Souls: 
+        Soul collection 
+        Leveling system 
+        Equipment upgrading 
+        Warp points act like bonfires, allowing the player to level up and respawning enemies 
+        
+
+Gameplay: 
+    Game consists of town hub with a single dungeon of x floors 
+    Every few floors (3-5), there will be a warp point back to town and a boss fight 
+    Quests 
+        Given from npc: 
+            Kill x enemies 
+            Clear y floor 
+            Return an item from the dungeon 
+        Discovered in the dungeon: 
+            Kill a boss on current floor 
+            Clear blight from an area 
+    Different classes to choose from, each with melee, ranged, and buff skill trees: 
+        Warrior: 
+            Melee - Highlander: 
+                Wields 2h weapons, dealing high melee damage 
+            Ranged - Arquebuser: 
+                Wields hand cannons, dealing high ranged damage 
+	        Buff: 
+		        Bleed damage 
+                Stuns 
+        Rogue: 
+            Melee - Assassin: 
+                Dual-wield daggers 
+            Ranged - Archer: 
+                Wields a bow 
+	        Buff: 
+		        Poison damage 
+		        Acid damage 
+                Increased backstab damage 
+        Mage: 
+            Melee - Golem: 
+                Uses earth magic to buff defence and melee damage  
+            Ranged - Thermomancer: 
+                Casts thermal magic 
+                    i.e. Fire and Ice 
+		        Must balance fire vs ice and energy vs radius 		    
+        Cleric: 
+            Melee - Paladin: 
+                Wields 1h maces and shields 
+                Supplements damage and defence with holy 
+            Ranged - Templar: 
+                Casts holy magic 
+		        Summons vengeful spirits 
+	        Buff: 
+		        Healing spells 
+		        Defence spells 
+	    Shaman: 
+	        Melee - Druid: 
+		        Nature magic 
+		        Summon wolves, bears, vines 
+	        Ranged - Venomancer: 
+		        Summons locust swarms, spiders 
+                Poison damage 
+	        Buff: 
+	    	    Shapeshifting  
+        Conjurer: 
+            Uses life force (own or others) 
+            Melee - Storm Lord: 
+                Uses air and lightning magic 
+            Ranged - Vampyre: 
+                Turns life force into damage 
+                Can use enemies' life force against them, controlling them for a few turns 
+            Buff: 
+                Life drain 
+
+    Rare elemental sets give the player special abilities: 
+        Elemental sets taken from designDOC 
+
+Mechanics: 
+    Game consists of town hub with a singular dungeon spanning some number of floors (15-30) 
+    Every few floors (3-5), there will be a warp point followed by a boss fight 
+        Warp points can be used to go back to town or to other warp points 
+        Player can also collect warp scrolls that act as single-use warp points 
+    Leveling system: 
+        Player collects 'souls' (sparks), that can be used to increase their level or augment their equipment 
+        Sparks are dropped on death, and can be picked up.  Dying a second time without regathering sparks loses them forever 
+
+Engine: 
+    Randomized levels 
+    Light-based vision 
+    A* movement 
+    Entity-component system 
+    
+    
