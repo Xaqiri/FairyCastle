@@ -32,11 +32,19 @@ class Tile():
     def __repr__(self): 
         return self.id 
 
+    @property 
+    def x(self): 
+        return self.pos_index[0] 
+    
+    @property 
+    def y(self): 
+        return self.pos_index[1] 
+        
     def update(self, SCREEN_OFFSET=0): 
         if SCREEN_OFFSET is not 0: 
             self.pos_coordinates = [self.pos_index[0]*self.tile_size+SCREEN_OFFSET[0], self.pos_index[1]*self.tile_size+SCREEN_OFFSET[1]] 
         
-    def render(self, screen, mode=0): 
+    def render(self, screen, font=None, mode=0): 
         if self.sprites and mode == 0: 
             if self.visible: 
                 for i in self.sprites: 
@@ -49,6 +57,8 @@ class Tile():
                     #i.set_alpha(self.alpha)
         else: 
             if self.visible: 
-                p.draw.rect(screen, self.visible_color, (self.pos_coordinates[0], self.pos_coordinates[1], self.tile_size, self.tile_size)) 
+                #p.draw.rect(screen, self.explored_color, (self.pos_coordinates[0], self.pos_coordinates[1], self.tile_size, self.tile_size)) 
+                screen.blit(font.render(self.ascii_tile, 1, self.visible_color), self.pos_coordinates) 
             else: 
-                p.draw.rect(screen, self.explored_color, (self.pos_coordinates[0], self.pos_coordinates[1], self.tile_size, self.tile_size)) 
+                #p.draw.rect(screen, self.explored_color, (self.pos_coordinates[0], self.pos_coordinates[1], self.tile_size, self.tile_size)) 
+                screen.blit(font.render(self.ascii_tile, 1, self.explored_color), self.pos_coordinates) 
