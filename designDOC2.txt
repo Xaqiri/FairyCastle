@@ -50,6 +50,7 @@ Gameplay:
 	        Buff: 
 		        Bleed damage 
                 Stuns 
+                Life regen 
         Rogue: 
             Melee - Assassin: 
                 Dual-wield daggers 
@@ -72,10 +73,13 @@ Gameplay:
                 Supplements damage and defence with holy 
             Ranged - Templar: 
                 Casts holy magic 
-		        Summons vengeful spirits 
 	        Buff: 
 		        Healing spells 
 		        Defence spells 
+                Summons vengeful spirits 
+                    Killing an enemy spawns vengeful spirits, acting as allies for the cleric 
+                    Spirits act as the resource for the cleric 
+                        Consume spirits either damage enemies for cast spells 
 	    Shaman: 
 	        Melee - Druid: 
 		        Nature magic 
@@ -84,7 +88,8 @@ Gameplay:
 		        Summons locust swarms, spiders 
                 Poison damage 
 	        Buff: 
-	    	    Shapeshifting  
+	    	    Shapeshifting 
+                    Wolf, Bear, Spider, Serpent 
         Conjurer: 
             Uses life force (own or others) 
             Melee - Storm Lord: 

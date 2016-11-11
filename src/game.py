@@ -14,7 +14,7 @@ from basic_ai import *
 
 p.init() 
 # Version #.  Release.mainBranch.testBranch 
-VER =           '0.10.19' 
+VER =           '0.10.20' 
 p.display.set_caption('Fairy Castle' + ',    version:  ' + VER) 
 
 ''' TODO ''' 
@@ -25,6 +25,8 @@ p.display.set_caption('Fairy Castle' + ',    version:  ' + VER)
 # Not limited to the x direction 
 # Bug doesn't seem to be caused by the screen_offset (returning to the start position after the bug sets in displays the same screen_offset the game started with) 
 
+# Fix efficiency 
+# A 32x32 map takes about 20ms to update and 30ms to render.  A 64x64 map takes about 70ms and 100ms. 
 # Add comments 
 # Make code cleaner 
 # Make tiles outside of the player's fov more interesting, possibly have tiles fade out after they leave the player's fov 
@@ -36,7 +38,7 @@ BLACK = pyRL.colors.Colors.BLACK
 GREEN = pyRL.colors.Colors.GREEN 
 GRAY  = pyRL.colors.Colors.DRKR_GRAY 
 
-SCALE = 2 
+SCALE = 1 
 TILE_DIMENSION = int(16*SCALE) 
 window_size = window_width, window_height = 1200, 700 
 SCREEN_CENTER = (window_width//2, window_height//2) 
@@ -44,12 +46,13 @@ screen = p.display.set_mode(window_size)
 game_panel = pyRL.panel.Panel(0, 0, window_width, window_height-100, pyRL.colors.Colors.DRKR_GRAY, screen, True) 
 message_panel = pyRL.panel.Panel(0, game_panel.height, window_width, window_height-game_panel.height, pyRL.colors.Colors.DRK_GRAY, screen, True) 
 character_sheet_panel = pyRL.panel.Panel(0, 0, game_panel.width/3, game_panel.height, pyRL.colors.Colors.DRK_GREEN, screen) 
+mouse_info_panel = pyRL.panel.Panel(0, 0, 350, 100, pyRL.colors.Colors.DRK_GREEN, screen) 
 base_panels = [game_panel, message_panel] 
-temp_panels = [character_sheet_panel] 
+temp_panels = [character_sheet_panel, mouse_info_panel] 
 font_size = 16 
 fonts = ['palatino', 'consolas', 'courier', 'terminal']
 ui_font = p.font.SysFont('consolas', font_size) 
-game_font = p.font.SysFont('terminal', 48) 
+game_font = p.font.SysFont('terminal', 32) 
 sprites = dict(actorSheet=p.image.load(os.path.join('..', 'assets', 'spriteSheets', 
                                                     'actorSpriteSheet13x6.png')).convert(), 
                 environmentSheet=p.image.load(os.path.join('..', 'assets', 'spriteSheets', 
@@ -71,10 +74,10 @@ environment_sprite_sheet = pyRL.sprite_loader.SpriteLoader(sprites['environmentS
 item_sprite_sheet = pyRL.sprite_loader.SpriteLoader(sprites['itemSheet'], TILE_DIMENSION, (0, 0), 
                                     16, 1, 12, 8).sprites 
 
-combat_component = CombatComponent(strength=40, defense=10) 
+combat_component = CombatComponent(strength=10, defense=1) 
 player = Entity(x=1, y=1, sprites=[actor_sprite_sheet[0][0]], tile_size=TILE_DIMENSION, name='player', color=pyRL.colors.Colors.CYAN, combat_component=combat_component, font=game_font) 
 entities = [player] 
-level = random_level_gen.RandomLevelGen(room_min_size=2, room_max_size=5, max_rooms=50, level_width=10, level_height=10, tile_size=TILE_DIMENSION, sprites=[environment_sprite_sheet[1][6], environment_sprite_sheet[4][6]], level_font=game_font) 
+level = random_level_gen.RandomLevelGen(room_min_size=20, room_max_size=50, max_rooms=1, level_width=64, level_height=64, tile_size=TILE_DIMENSION, sprites=[environment_sprite_sheet[1][6], environment_sprite_sheet[4][6]], level_font=game_font) 
 level.make_level(entities) 
 screen_offset = [game_panel.center[0]-player.x*TILE_DIMENSION, game_panel.center[1]-player.y*TILE_DIMENSION] 
 player.pos_coordinates = [player.x*player.tile_size+screen_offset[0], player.y*player.tile_size+screen_offset[1]] 
@@ -96,15 +99,15 @@ def init_fov():
 def next_level(): 
     global entities, level, screen_offset, dungeon_level 
     entities = [player] 
-    level = random_level_gen.RandomLevelGen(room_min_size=2, room_max_size=8, max_rooms=50, level_width=32, level_height=32, tile_size=TILE_DIMENSION, sprites=[environment_sprite_sheet[1][6], environment_sprite_sheet[4][6]], level_font=game_font) 
+    level = random_level_gen.RandomLevelGen(room_min_size=4, room_max_size=8, max_rooms=50, level_width=32, level_height=32, tile_size=TILE_DIMENSION, sprites=[environment_sprite_sheet[1][6], environment_sprite_sheet[4][6]], level_font=game_font) 
     level.make_level(entities) 
     screen_offset = [game_panel.center[0]-player.x*TILE_DIMENSION, game_panel.center[1]-player.y*TILE_DIMENSION] 
     player.pos_coordinates = [player.x*player.tile_size+screen_offset[0], player.y*player.tile_size+screen_offset[1]] 
+    dungeon_level += 1 
     for r in level.rooms: 
-        place_objects(r) 
+        place_objects(r, dungeon_level) 
     init_fov() 
     player.took_turn = True 
-    dungeon_level += 1 
     
 def enemy_death(monster): 
     global entities 
@@ -116,10 +119,10 @@ def enemy_death(monster):
     
 def draw_panel_info(panel, label, info, start_pos, screen): 
     y_offset = 50 
-    screen.blit(ui_font.render(label, 1, pyRL.colors.Colors.WHITE), (panel.top_x, panel.top_y)) 
-    for key in info.keys(): 
-        screen.blit(ui_font.render('{}:  {}'.format(key, info[key]), 1, pyRL.colors.Colors.WHITE), (panel.top_x, panel.top_y+y_offset)) 
-        y_offset+=50 
+    screen.blit(ui_font.render(label, 1, pyRL.colors.Colors.WHITE), (start_pos[0], start_pos[1])) 
+    for key, value in info.items(): 
+        screen.blit(ui_font.render('{}:  {}'.format(key, value), 1, pyRL.colors.Colors.WHITE), (start_pos[0], start_pos[1]+y_offset)) 
+        y_offset+=font_size 
 
 def render_bar(x, y, total_width, height, name, value, maximum, bar_color, back_color): 
     ''' Generic function for rendering ui bars for e.g. hp, mp, xp''' 
@@ -158,20 +161,52 @@ def move_board(dx, dy):
     global screen_offset 
     screen_offset[0] -= dx * TILE_DIMENSION 
     screen_offset[1] -= dy * TILE_DIMENSION 
-    
-def place_objects(room): 
+
+def random_choice_index(chances): 
+    dice = random.randint(1, sum(chances)) 
+    running_sum = 0 
+    choice = 0 
+    for w in chances: 
+        running_sum += w 
+        if dice <= running_sum: 
+            return choice 
+        choice += 1 
+
+def random_choice(chances_dict): 
+    chances = chances_dict.values() 
+    strings = [key for key in chances_dict.keys()]
+    return strings[random_choice_index(chances)] 
+
+def from_dungeon_level(table, dungeon_level): 
+    for (value, level) in reversed(table): 
+        if dungeon_level >= level: 
+            return value 
+    return 0 
+
+def place_objects(room, dungeon_level): 
     global entities 
-    num_monsters = 3 
+    max_monsters = from_dungeon_level([[2, 1], [3, 2], [6, 3]], dungeon_level) 
+    monster_chances = {} 
+    monster_chances['goblin'] = 70 
+    monster_chances['troll'] = from_dungeon_level([[10, 2], [20, 3], [60, 4], [80, 5]], dungeon_level) 
+    num_monsters = random.randint(1, max_monsters+1) 
+
     for i in range(num_monsters): 
         x = random.randint(room.x1+1, room.x2) 
         y = random.randint(room.y1+1, room.y2) 
-        combat_component = CombatComponent(strength=10, defense=0, max_hp=20, xp=20, death_function=enemy_death) 
-        ai_component = BasicAI() 
-        monster = Entity(x, y, TILE_DIMENSION, [actor_sprite_sheet[1][0]], 'g', pyRL.colors.Colors.GREEN, False, 'goblin', False, combat_component, ai_component, game_font) 
-        if not is_blocked(level.level[x][y], entities) and player.x != monster.x and player.y != monster.y: 
+        if not is_blocked(level.level[x][y], entities) and (player.x != x and player.y != y): 
+            choice = random_choice(monster_chances) 
+            if choice == 'goblin': 
+                combat_component = CombatComponent(strength=10, defense=0, max_hp=20, xp=20, death_function=enemy_death) 
+                ai_component = BasicAI() 
+                monster = Entity(x, y, TILE_DIMENSION, [actor_sprite_sheet[1][0]], 'g', pyRL.colors.Colors.GREEN, False, 'goblin', False, combat_component, ai_component, game_font) 
+            elif choice == 'troll': 
+                combat_component = CombatComponent(strength=20, defense=4, max_hp=50, xp=80, death_function=enemy_death) 
+                ai_component = BasicAI() 
+                monster = Entity(x, y, TILE_DIMENSION, [actor_sprite_sheet[2][2]], 'T', pyRL.colors.Colors.YELLOW, False, 'troll', False, combat_component, ai_component, game_font) 
             entities.append(monster) 
-    x = random.randint(room.x1+1, room.x2) 
-    y = random.randint(room.y1+1, room.y2) 
+    #x = random.randint(room.x1+1, room.x2) 
+    #y = random.randint(room.y1+1, room.y2) 
     
 def input(): 
     global look_mode 
@@ -200,7 +235,7 @@ def input():
                 player.took_turn = True 
             elif e.key == p.K_COMMA: 
                 for e in entities: 
-                    if e.name == 'stairs_down' and e.x == player.x and e.y == player.y: 
+                    if e.name == 'stairs_down' and e.x == player.x and e.y == player.y and dungeon_level < 5: 
                         next_level() 
                     elif e.ascii_tile == '%' and e.x == player.x and e.y == player.y: 
                         player.heal(e.combat_component.max_hp) 
@@ -208,6 +243,7 @@ def input():
                 character_sheet_panel.visible = not character_sheet_panel.visible 
             elif e.key == p.K_l: 
                 look_mode = not look_mode 
+                mouse_info_panel.visible = not mouse_info_panel.visible 
         else: 
             player.took_turn = False 
             
@@ -219,7 +255,7 @@ def update(clock):
         fov_recompute = False 
         fov.update(entities=entities, vision_range=8, level=level.level) 
         for ex in fov.explored_tiles: 
-            ex.update(screen_offset) 
+            ex.update(screen_offset)  
     if player.took_turn: 
         player.took_turn = False 
         for e in entities: 
@@ -229,7 +265,8 @@ def update(clock):
             e.update(screen_offset) 
     mouse_pos = p.mouse.get_pos() 
     fps_counter = clock.get_fps() 
-
+    mouse_info_panel.origin = mouse_pos 
+    
 def render(): 
     global state 
     screen.fill(GRAY) 
@@ -237,18 +274,20 @@ def render():
         panel.render() 
     for v in fov.visible_tiles: 
         if in_bounds(v): 
-            v.render(screen, font=game_font, mode=1) 
+            v.render(screen, font=game_font, mode=0) 
     for ex in fov.explored_tiles: 
         if in_bounds(ex) and not ex.visible: 
-            ex.render(screen, font=game_font, mode=1) 
+            ex.render(screen, font=game_font, mode=0) 
     for e in entities: 
         if e is not player: 
-            e.render(screen, 1) 
-    player.render(screen, 1) 
+            e.render(screen, 0) 
+    player.render(screen, 0) 
     for panel in temp_panels: 
         panel.render() 
         if panel == character_sheet_panel and panel.visible: 
             draw_panel_info(panel, 'Character Info', {'Level':player.level, 'Strength':player.combat_component.strength, 'Defense':player.combat_component.defense}, (panel.top_x, panel.top_y), screen) 
+        if panel == mouse_info_panel and look_mode and panel.visible: 
+            draw_panel_info(panel, 'Allan', {'Description':'please add text'}, panel.origin, screen) 
     render_bar(message_panel.top_x, message_panel.top_y+50, 200, 25, 'hp', player.combat_component.current_hp, player.combat_component.max_hp, pyRL.colors.Colors.RED, pyRL.colors.Colors.DRK_RED) 
     render_bar(message_panel.top_x+250, message_panel.top_y+50, 200, 25, 'mp', player.combat_component.current_mp, player.combat_component.max_mp, pyRL.colors.Colors.BLUE, pyRL.colors.Colors.DRK_BLUE) 
     render_bar(message_panel.top_x, message_panel.top_y+message_panel.height-10, message_panel.width, 10, 'xp', player.combat_component.xp, 100, pyRL.colors.Colors.YELLOW, pyRL.colors.Colors.DRK_YELLOW) 
@@ -256,9 +295,9 @@ def render():
     screen.blit(ui_font.render(str((mouse_pos[0], mouse_pos[1])), 1, pyRL.colors.Colors.GREEN), (message_panel.width-100, message_panel.top_y+10)) 
     screen.blit(ui_font.render(str(('{:.2f}'.format(fps_counter))), 1, pyRL.colors.Colors.GREEN), (message_panel.width-50, message_panel.top_y+50)) 
     p.display.flip() 
-    
+
 for r in level.rooms: 
-    place_objects(r) 
+    place_objects(r, dungeon_level) 
 
 fov = pyRL.fov.FOV() 
 clock = p.time.Clock() 
@@ -267,9 +306,17 @@ mouse_pos = p.mouse.get_pos()
 fps_counter = clock.get_fps() 
 fov_recompute = True 
 while not done: 
+    u = p.time.get_ticks() 
     update(clock) 
+    u2 = p.time.get_ticks() 
+    r = p.time.get_ticks() 
     render() 
+    r2 = p.time.get_ticks() 
+    i = p.time.get_ticks() 
     input() 
+    i2 = p.time.get_ticks() 
+    print('Update:  {}, Render:  {}, Input:  {}'.format(u2-u, r2-r, i2-i)) 
     clock.tick(60) 
+    
 
 p.quit()    

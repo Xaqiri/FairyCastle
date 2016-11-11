@@ -6,11 +6,11 @@ p.init()
 # Consider adding pointers to surrounding tiles for movement purposes 
 
 class Tile(): 
-    def __init__(self, sprites=None, ascii_tile='#', font=None, pos=(0, 0), tile_size=16, name='A tile', id='tile', walkable=True, visible_color=None, explored_color=None): 
+    def __init__(self, sprite=None, ascii_tile='#', font=None, pos=(0, 0), tile_size=16, name='A tile', id='tile', walkable=True, visible_color=None, explored_color=None): 
         self.tile_size = tile_size
         self.pos_index = [pos[0], pos[1]] 
         self.pos_coordinates = 0 
-        self.sprites = sprites 
+        self.sprite = sprite 
         self.is_walkable = walkable 
         self.name = name 
         self.id = id 
@@ -45,16 +45,14 @@ class Tile():
             self.pos_coordinates = [self.pos_index[0]*self.tile_size+SCREEN_OFFSET[0], self.pos_index[1]*self.tile_size+SCREEN_OFFSET[1]] 
         
     def render(self, screen, font=None, mode=0): 
-        if self.sprites and mode == 0: 
+        if self.sprite and mode == 0: 
             if self.visible: 
-                for i in self.sprites: 
-                    screen.blit(i, (self.pos_coordinates[0], self.pos_coordinates[1])) 
+                screen.blit(self.sprite, (self.pos_coordinates[0], self.pos_coordinates[1])) 
             else: 
                 #p.draw.rect(screen, self.explored_color, (self.pos_coordinates[0], self.pos_coordinates[1], self.tile_size, self.tile_size)) 
-                for i in self.sprites: 
-                    #i.set_alpha(int(self.alpha/2)) 
-                    screen.blit(i, (self.pos_coordinates[0], self.pos_coordinates[1])) 
-                    #i.set_alpha(self.alpha)
+                self.sprite.set_alpha(int(self.alpha/2)) 
+                screen.blit(self.sprite, (self.pos_coordinates[0], self.pos_coordinates[1])) 
+                self.sprite.set_alpha(self.alpha)
         else: 
             if self.visible: 
                 #p.draw.rect(screen, self.explored_color, (self.pos_coordinates[0], self.pos_coordinates[1], self.tile_size, self.tile_size)) 

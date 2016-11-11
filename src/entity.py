@@ -82,7 +82,7 @@ class Entity():
 
     def render(self, screen, mode=0): 
         if self.visible or self.always_visible: 
-            if self.sprites and mode == 0: 
+            if self.sprites and mode == 0 and self.combat_component.current_hp > 0: 
                 for i in self.sprites: 
                     screen.blit(i, self.pos_coordinates) 
             else: 

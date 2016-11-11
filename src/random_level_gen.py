@@ -26,21 +26,21 @@ class RandomLevelGen():
         self.level_font = level_font 
         self.tile_size = tile_size 
         self.sprites = sprites 
-        self.level = [[Tile(pos=(x, y), ascii_tile='#', font=self.level_font, tile_size=self.tile_size, walkable=False, visible_color=self.visible_wall, explored_color=self.explored_wall, sprites=[self.sprites[0]]) for y in range(level_height)] for x in range(level_width)] 
+        self.level = [[Tile(pos=(x, y), ascii_tile='#', font=self.level_font, tile_size=self.tile_size, walkable=False, visible_color=self.visible_wall, explored_color=self.explored_wall, sprite=self.sprites[0]) for y in range(level_height)] for x in range(level_width)] 
         self.rooms = [] 
 
     def create_room(self, room):  
         for x in range(room.x1, room.x2): 
             for y in range(room.y1, room.y2): 
-                self.level[x][y] = Tile(pos=(x, y), ascii_tile='.', font=self.level_font, tile_size=self.tile_size, walkable=True, visible_color=self.visible_floor, explored_color=self.explored_floor, sprites=[self.sprites[1]]) 
+                self.level[x][y] = Tile(pos=(x, y), ascii_tile='.', font=self.level_font, tile_size=self.tile_size, walkable=True, visible_color=self.visible_floor, explored_color=self.explored_floor, sprite=self.sprites[1]) 
 
     def create_h_tunnel(self, x1, x2, y):  
         for x in range(min(x1, x2), max(x1, x2) + 1): 
-            self.level[x][y] = Tile(pos=(x, y), ascii_tile='.', font=self.level_font, tile_size=self.tile_size, walkable=True, visible_color=self.visible_floor, explored_color=self.explored_floor, sprites=[self.sprites[1]]) 
+            self.level[x][y] = Tile(pos=(x, y), ascii_tile='.', font=self.level_font, tile_size=self.tile_size, walkable=True, visible_color=self.visible_floor, explored_color=self.explored_floor, sprite=self.sprites[1]) 
 
     def create_v_tunnel(self, y1, y2, x):  
         for y in range(min(y1, y2), max(y1, y2) + 1): 
-            self.level[x][y] = Tile(pos=(x, y), ascii_tile='.', font=self.level_font, tile_size=self.tile_size, walkable=True, visible_color=self.visible_floor, explored_color=self.explored_floor, sprites=[self.sprites[1]]) 
+            self.level[x][y] = Tile(pos=(x, y), ascii_tile='.', font=self.level_font, tile_size=self.tile_size, walkable=True, visible_color=self.visible_floor, explored_color=self.explored_floor, sprite=self.sprites[1]) 
 
     def make_level(self, entities=None, items=None):  
         self.rooms = [] 
