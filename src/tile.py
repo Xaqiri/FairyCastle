@@ -50,7 +50,7 @@ class Tile():
                 screen.blit(self.sprite, (self.pos_coordinates[0], self.pos_coordinates[1])) 
             else: 
                 #p.draw.rect(screen, self.explored_color, (self.pos_coordinates[0], self.pos_coordinates[1], self.tile_size, self.tile_size)) 
-                self.sprite.set_alpha(int(self.alpha/2)) 
+                self.sprite.set_alpha(int(self.alpha/4)) 
                 screen.blit(self.sprite, (self.pos_coordinates[0], self.pos_coordinates[1])) 
                 self.sprite.set_alpha(self.alpha)
         else: 

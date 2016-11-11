@@ -82,5 +82,5 @@ class RandomLevelGen():
                         self.create_h_tunnel(prev_x, new_x, new_y) 
                 self.rooms.append(new_room) 
                 num_rooms += 1 
-        stairs = Entity(x=new_x, y=new_y, ascii_tile='>', name='stairs_down', font=self.level_font, tile_size=self.tile_size, is_walkable=True, color=colors.Colors.WHITE, always_visible=True) 
+        stairs = Entity(x=new_x, y=new_y, ascii_tile='>', sprites=[self.sprites[2]], name='stairs_down', font=self.level_font, tile_size=self.tile_size, is_walkable=True, color=colors.Colors.WHITE, always_visible=True) 
         entities.append(stairs) 

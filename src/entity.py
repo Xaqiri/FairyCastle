@@ -19,6 +19,9 @@ class Entity():
         self.combat_component = combat_component 
         if self.combat_component: 
             self.combat_component.parent = self 
+            self.living_sprite = sprites[0] 
+            self.death_sprite = sprites[1] 
+        self.current_sprite = self.living_sprite if self.combat_component else self.sprites[0] 
         self.ai_component = ai_component 
         if self.ai_component: 
             self.ai_component.parent = self 
@@ -82,9 +85,8 @@ class Entity():
 
     def render(self, screen, mode=0): 
         if self.visible or self.always_visible: 
-            if self.sprites and mode == 0 and self.combat_component.current_hp > 0: 
-                for i in self.sprites: 
-                    screen.blit(i, self.pos_coordinates) 
+            if self.sprites and mode == 0: 
+                screen.blit(self.current_sprite, self.pos_coordinates) 
             else: 
                 try: 
                     screen.blit(self.font.render(self.ascii_tile, 1, self.color), self.pos_coordinates) 
