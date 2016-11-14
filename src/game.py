@@ -7,17 +7,19 @@ from time import *
 import pyRL 
 import random_level_gen 
 from ui import * 
+from item import * 
+from heal import * 
 from tile import * 
 from entity import * 
-from combat_component import * 
 from basic_ai import * 
+from combat_component import * 
 
 p.init() 
 # Version #.  Release.mainBranch.testBranch 
-VER =           '0.10.21' 
+VER =           '0.10.22' 
 p.display.set_caption('Fairy Castle' + ',    version:  ' + VER) 
 
-''' TODO ''' 
+''' BUGS ''' 
 # Fix phantom wall bug:  Some times the player can walk through tiles that are displayed as walls, and can't walk through tiles displayed as floors 
 # After moving around the level for a while, the game things the player is one tile further to the right than they actually are 
 # i.e. start the dungeon at (7, 34), going (floor, player, floor, wall).  After walking around for a while and returning to the start position, 
@@ -27,10 +29,15 @@ p.display.set_caption('Fairy Castle' + ',    version:  ' + VER)
 
 # Fix efficiency 
 # A 32x32 map takes about 20ms to update and 30ms to render.  A 64x64 map takes about 70ms and 100ms. (on my laptop) 
+
+''' TODO ''' 
 # Add comments 
 # Make code cleaner 
 # Make tiles outside of the player's fov more interesting, possibly have tiles fade out after they leave the player's fov 
 # e.g. a tile's visible to the player.  They move one tile to the right, so the tiles that are now outside of the player's fov fade out over two seconds or so 
+# Add equipment 
+# Add spell scrolls 
+# Add mouseover info for enemies 
 
 ''' Colors ''' 
 TRANS = (128, 0, 128) 
@@ -75,7 +82,7 @@ sprites = dict(actorSheet=p.image.load(os.path.join('..', 'assets', 'spriteSheet
                 environmentSheet=p.image.load(os.path.join('..', 'assets', 'spriteSheets', 
                                                     'environmentSpriteSheet15x8.png')).convert(), 
                 itemSheet=p.image.load(os.path.join('..', 'assets', 'spriteSheets', 
-                                                    'itemSpriteSheet12x8.png')).convert(), 
+                                                    'itemSpriteSheet14x14.png')).convert(), 
                 cursor=p.image.load(os.path.join('..', 'assets', '1', 
                                                     'cursor.png')).convert()) 
 
@@ -89,7 +96,7 @@ actor_sprite_sheet = pyRL.sprite_loader.SpriteLoader(sprites['actorSheet'], TILE
 environment_sprite_sheet = pyRL.sprite_loader.SpriteLoader(sprites['environmentSheet'], TILE_DIMENSION, (0, 0), 
                                     16, 1, 15, 8).sprites 
 item_sprite_sheet = pyRL.sprite_loader.SpriteLoader(sprites['itemSheet'], TILE_DIMENSION, (0, 0), 
-                                    16, 1, 12, 8).sprites 
+                                    16, 1, 14, 14).sprites 
 
 combat_component = CombatComponent(strength=10, defense=1) 
 player = Entity(x=1, y=1, sprites=[actor_sprite_sheet[0][0], actor_sprite_sheet[0][4]], tile_size=TILE_DIMENSION, name='player', color=pyRL.colors.Colors.CYAN, combat_component=combat_component, font=game_font) 
@@ -130,6 +137,7 @@ def enemy_death(monster):
     global entities 
     monster.ascii_tile = '%' 
     monster.current_sprite = monster.death_sprite 
+    monster.current_sprite.set_alpha(185) 
     monster.color = pyRL.colors.Colors.RED 
     monster.is_walkable = True 
     monster.ai_component = None 
@@ -207,11 +215,16 @@ def place_objects(room, dungeon_level):
     monster_chances = {} 
     monster_chances['goblin'] = 70 
     monster_chances['troll'] = from_dungeon_level([[10, 2], [20, 3], [60, 4], [80, 5]], dungeon_level) 
-    num_monsters = random.randint(1, max_monsters+1) 
+    num_monsters = random.randint(0, max_monsters) 
+
+    max_items = from_dungeon_level([[1, 1]], dungeon_level) 
+    item_chances = {} 
+    item_chances['hp_potion'] = from_dungeon_level([[80, 1], [60, 3], [20, 4]], dungeon_level) 
+    num_items = random.randint(0, max_items) 
 
     for i in range(num_monsters): 
-        x = random.randint(room.x1+1, room.x2) 
-        y = random.randint(room.y1+1, room.y2) 
+        x = random.randint(room.x1+1, room.x2-1) 
+        y = random.randint(room.y1+1, room.y2-1) 
         if not is_blocked(level.level[x][y], entities) and (player.x != x and player.y != y): 
             choice = random_choice(monster_chances) 
             if choice == 'goblin': 
@@ -223,6 +236,16 @@ def place_objects(room, dungeon_level):
                 ai_component = BasicAI() 
                 monster = Entity(x, y, TILE_DIMENSION, [actor_sprite_sheet[1][1], actor_sprite_sheet[3][4]], 'T', pyRL.colors.Colors.YELLOW, False, 'troll', False, combat_component, ai_component, game_font) 
             entities.append(monster) 
+    for i in range(num_items): 
+        x = random.randint(room.x1+1, room.x2-1) 
+        y = random.randint(room.y1+1, room.y2-1) 
+        if not is_blocked(level.level[x][y], entities) and (level.stairs.x != x and level.stairs.y != y): 
+            choice = random_choice(item_chances) 
+            if choice == 'hp_potion': 
+                heal_component = Heal(amount=30) 
+                item_component = Item(use_component=heal_component) 
+                item = Entity(x=x, y=y, tile_size=TILE_DIMENSION, sprites=item_sprite_sheet[3][12], ascii_tile='!', color=pyRL.colors.Colors.RED, is_walkable=True, name='hp potion', always_visible=True, combat_component=None, ai_component=None, font=game_font, item_component=item_component) 
+            entities.append(item) 
     #x = random.randint(room.x1+1, room.x2) 
     #y = random.randint(room.y1+1, room.y2) 
     
@@ -253,12 +276,21 @@ def input():
                 player.took_turn = True 
             elif e.key == p.K_COMMA: 
                 for e in entities: 
-                    if e.name == 'stairs_down' and e.x == player.x and e.y == player.y and dungeon_level < 5: 
-                        next_level() 
-                    elif e.ascii_tile == '%' and e.x == player.x and e.y == player.y: 
-                        player.heal(e.combat_component.max_hp) 
+                    if e.x == player.x and e.y == player.y: 
+                        if e.name == 'stairs_down' and dungeon_level < 5: 
+                            next_level() 
+                        elif e.ascii_tile == '!': 
+                            e.item_component.pick_up(player.inventory) 
+                            entities.remove(e) 
             elif e.key == p.K_c: 
                 character_sheet_panel.visible = not character_sheet_panel.visible 
+            elif e.key == p.K_i: 
+                print(player.inventory) 
+            elif e.key == p.K_q: 
+                for i in player.inventory: 
+                    if i.name == 'hp potion': 
+                        i.item_component.use(player) 
+                        break 
             elif e.key == p.K_l: 
                 look_mode = not look_mode 
                 mouse_info_panel.visible = not mouse_info_panel.visible 
@@ -280,6 +312,7 @@ def update(clock):
             if e.ai_component: 
                 e.ai_component.take_turn(player, level.level, entities) 
             e.visible = level.level[e.x][e.y].visible 
+            e.explored = level.level[e.x][e.y].explored 
             e.update(screen_offset) 
     mouse_pos = p.mouse.get_pos() 
     fps_counter = clock.get_fps() 
@@ -298,7 +331,11 @@ def render():
             ex.render(screen, font=game_font, mode=render_mode) 
     for e in entities: 
         if e is not player: 
-            e.render(screen, render_mode) 
+            try: 
+                e.render(screen, render_mode) 
+            except: 
+                print(e.name) 
+                break 
     player.render(screen, render_mode) 
     for panel in temp_panels: 
         panel.render() 

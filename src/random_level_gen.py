@@ -28,6 +28,7 @@ class RandomLevelGen():
         self.sprites = sprites 
         self.level = [[Tile(pos=(x, y), ascii_tile='#', font=self.level_font, tile_size=self.tile_size, walkable=False, visible_color=self.visible_wall, explored_color=self.explored_wall, sprite=self.sprites[0]) for y in range(level_height)] for x in range(level_width)] 
         self.rooms = [] 
+        self.stairs = None 
 
     def create_room(self, room):  
         for x in range(room.x1, room.x2): 
@@ -82,5 +83,5 @@ class RandomLevelGen():
                         self.create_h_tunnel(prev_x, new_x, new_y) 
                 self.rooms.append(new_room) 
                 num_rooms += 1 
-        stairs = Entity(x=new_x, y=new_y, ascii_tile='>', sprites=[self.sprites[2]], name='stairs_down', font=self.level_font, tile_size=self.tile_size, is_walkable=True, color=colors.Colors.WHITE, always_visible=True) 
-        entities.append(stairs) 
+        self.stairs = Entity(x=new_x, y=new_y, ascii_tile='>', sprites=self.sprites[2], name='stairs_down', font=self.level_font, tile_size=self.tile_size, is_walkable=True, color=colors.Colors.WHITE, always_visible=True) 
+        entities.append(self.stairs) 

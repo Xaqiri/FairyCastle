@@ -29,3 +29,4 @@ class CombatComponent():
         if damage > 0: 
             target.combat_component.take_damage(damage, player) 
         
+    

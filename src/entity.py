@@ -3,7 +3,7 @@ import math
 class Entity(): 
     def __init__(self, x=0, y=0, tile_size=16, sprites=None, ascii_tile='@', 
                     color=None, is_walkable=False, name='entity', always_visible=False, combat_component=None, 
-                    ai_component=None, font=None): 
+                    ai_component=None, font=None, item_component=None): 
         self.x = x 
         self.y = y 
         self.tile_size = tile_size 
@@ -16,19 +16,29 @@ class Entity():
         self.name = name 
         self.always_visible = always_visible 
         self.visible = True if self.name == 'player' else False 
+        self.explored = False 
         self.combat_component = combat_component 
         if self.combat_component: 
             self.combat_component.parent = self 
             self.living_sprite = sprites[0] 
             self.death_sprite = sprites[1] 
-        self.current_sprite = self.living_sprite if self.combat_component else self.sprites[0] 
+            self.current_sprite = self.living_sprite if self.combat_component else self.sprites[0] 
+        else: 
+            self.current_sprite = sprites 
         self.ai_component = ai_component 
         if self.ai_component: 
             self.ai_component.parent = self 
+        self.item_component = item_component 
+        if self.item_component: 
+            self.item_component.parent = self 
         self.level = 1 
         self.id = 'friend' if self.name is 'player' else 'enemy' 
         self.took_turn = False 
-        
+        self.inventory = [] 
+
+    def __repr__(self): 
+        return self.name 
+
     def distance_to(self, other): 
         dx = other.x - self.x 
         dy = other.y - self.y 
@@ -84,7 +94,7 @@ class Entity():
                 self.combat_component.defense += 1 
 
     def render(self, screen, mode=0): 
-        if self.visible or self.always_visible: 
+        if self.visible or (self.always_visible and self.explored): 
             if self.sprites and mode == 0: 
                 screen.blit(self.current_sprite, self.pos_coordinates) 
             else: 
