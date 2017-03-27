@@ -16,7 +16,7 @@ from combat_component import *
 
 p.init() 
 # Version #.  Release.mainBranch.testBranch 
-VER =           '0.10.22' 
+VER =           '0.10.23' 
 p.display.set_caption('Fairy Castle' + ',    version:  ' + VER) 
 
 ''' BUGS ''' 
@@ -351,6 +351,12 @@ def render():
     screen.blit(ui_font.render(str(('{:.2f}'.format(fps_counter))), 1, pyRL.colors.Colors.GREEN), (message_panel.width-50, message_panel.top_y+50)) 
     p.display.flip() 
 
+def time_test(func): 
+    t = p.time.get_ticks() 
+    func 
+    t2 = p.time.get_ticks() 
+    print('Func took:  {}ms'.format(t2-t)) 
+
 for r in level.rooms: 
     place_objects(r, dungeon_level) 
 
@@ -361,16 +367,9 @@ mouse_pos = p.mouse.get_pos()
 fps_counter = clock.get_fps() 
 fov_recompute = True 
 while not done: 
-    #u = p.time.get_ticks() 
     update(clock) 
-    #u2 = p.time.get_ticks() 
-    #r = p.time.get_ticks() 
     render() 
-    #r2 = p.time.get_ticks() 
-    #i = p.time.get_ticks() 
     input() 
-    #i2 = p.time.get_ticks() 
-    #print('Update:  {}, Render:  {}, Input:  {}'.format(u2-u, r2-r, i2-i)) 
     clock.tick(60) 
     
 

@@ -47,8 +47,8 @@ Gameplay:
                 Wields 2h weapons, dealing high melee damage 
             Ranged - Arquebuser: 
                 Wields hand cannons, dealing high ranged damage 
-	        Buff: 
-		        Bleed damage 
+            Buff: 
+                Bleed damage 
                 Stuns 
                 Life regen 
         Rogue: 
@@ -56,9 +56,9 @@ Gameplay:
                 Dual-wield daggers 
             Ranged - Archer: 
                 Wields a bow 
-	        Buff: 
-		        Poison damage 
-		        Acid damage 
+            Buff: 
+                Poison damage 
+                Acid damage 
                 Increased backstab damage 
         Mage: 
             Melee - Golem: 
@@ -66,29 +66,29 @@ Gameplay:
             Ranged - Thermomancer: 
                 Casts thermal magic 
                     i.e. Fire and Ice 
-		        Must balance fire vs ice and energy vs radius 		    
+                Must balance fire vs ice and energy vs radius 
         Cleric: 
             Melee - Paladin: 
                 Wields 1h maces and shields 
                 Supplements damage and defence with holy 
             Ranged - Templar: 
                 Casts holy magic 
-	        Buff: 
-		        Healing spells 
-		        Defence spells 
+        Buff: 
+                Healing spells 
+                Defence spells 
                 Summons vengeful spirits 
                     Killing an enemy spawns vengeful spirits, acting as allies for the cleric 
                     Spirits act as the resource for the cleric 
                         Consume spirits either damage enemies for cast spells 
-	    Shaman: 
-	        Melee - Druid: 
-		        Nature magic 
-		        Summon wolves, bears, vines 
-	        Ranged - Venomancer: 
-		        Summons locust swarms, spiders 
+        Shaman: 
+            Melee - Druid: 
+                Nature magic 
+                Summon wolves, bears, vines 
+            Ranged - Venomancer: 
+                Summons locust swarms, spiders 
                 Poison damage 
-	        Buff: 
-	    	    Shapeshifting 
+            Buff: 
+                Shapeshifting 
                     Wolf, Bear, Spider, Serpent 
         Conjurer: 
             Uses life force (own or others) 
